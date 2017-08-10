@@ -1,0 +1,16 @@
+{ "compilerOptions":
+  { "target": "es2015"
+  , "module": "commonjs"
+
+  , "strict": true
+
+  , "jsx": "react"
+  , "removeComments": true
+  , "declaration": true
+  , "sourceMap": true
+
+  , "outDir": "./_cache/ts"
+  }
+
+, "include": [ "./src/**/*" ]
+}
