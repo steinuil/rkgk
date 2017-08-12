@@ -2,6 +2,7 @@ import * as React from "react";
 import * as Login from "./Login";
 
 
+/*
 export interface AppState {
   login: null | {
     token: {
@@ -10,6 +11,12 @@ export interface AppState {
       expires: Date;
     };
   };
+}
+*/
+
+
+export interface AppState {
+  login: null | string;
 }
 
 
@@ -21,13 +28,14 @@ export class App extends React.Component<{}, AppState> {
     };
   }
 
-  handleLogin(login: Login.Props) {
-    console.log(login);
+  handleLogin(token: string) {
+    this.setState({ login: token });
   }
 
   render() {
     return <div>
       <Login.Form onLogin={this.handleLogin.bind(this)} />
+      <code>Login: {this.state.login}</code>
     </div>;
   }
 }

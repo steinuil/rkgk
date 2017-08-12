@@ -1,4 +1,7 @@
-export namespace RawAPI {
+import * as Ajax from "./ajax";
+
+
+namespace RawAPI {
   type url  = string;
   type date = string;
   type maybeString = string;
@@ -239,5 +242,79 @@ export namespace RawAPI {
       tag: string;
       illust: Illust;
     }>;
+  }
+}
+
+
+
+const root = 'https://oauth.secure.pixiv.net/'
+
+
+function request(method: Ajax.Method, url: string, data?: any) {
+  return Ajax.request(method, 'http://localhost:9292/' + encodeURI(url), data);
+}
+
+
+export function login(name: string, password: string) {
+  return request(Ajax.Method.POST, root + 'auth/token', {
+    get_secure_url: 'true',
+    client_id: 'MOBrBDS8blbauoSck0ZfDbtuzpyT',
+    client_secret: 'lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj',
+    grant_type: 'password',
+    username: name,
+    password: password
+  })
+}
+
+
+export class API {
+  tokens: {
+    refresh: string;
+    access: string;
+    expires: Date;
+  };
+
+  init(refreshToken: string, accessToken?: string, expires?: Date): Promise<API> {
+    return new Promise((resolve, reject) => {
+      if (!(accessToken && expires) || (new Date()) > expires) {
+        this.refresh(refreshToken)
+          .then(resp => {
+            const now = new Date();
+            const response: RawAPI.Login = JSON.parse(resp);
+            expires = new Date(
+              now.getTime() + (response.response.expires_in * 1000)
+            );
+
+            this.tokens = {
+              refresh: response.response.refresh_token,
+              access: response.response.access_token,
+              expires: expires
+            };
+
+            resolve(this);
+          })
+          .catch(({ status, body }) => {
+            reject(JSON.parse(body));
+          });
+      } else {
+        this.tokens = {
+          refresh: refreshToken,
+          access: accessToken,
+          expires: expires
+        };
+
+        resolve(this);
+      }
+    });
+  }
+
+  refresh(refreshToken: string) {
+    return request(Ajax.Method.POST, root + 'auth/token', {
+      get_secure_url: 'true',
+      client_id: 'MOBrBDS8blbauoSck0ZfDbtuzpyT',
+      client_secret: 'lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj',
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken
+    })
   }
 }
