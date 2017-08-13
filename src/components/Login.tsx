@@ -1,4 +1,6 @@
+// Login form window.
 import * as React from "react";
+import * as Pixiv from "../pixiv";
 
 
 export interface State {
@@ -8,7 +10,8 @@ export interface State {
 
 
 export interface Props {
-  onLogin: (token: string) => void;
+  onLogin: any;
+  //onLogin: ([Pixiv.Tokens, Pixiv.MyInfo]) => void;
 }
 
 
@@ -32,19 +35,21 @@ export class Form extends React.Component<Props, State> {
   }
 
   submit(ev: React.MouseEvent<HTMLButtonElement>) {
-    this.props.onLogin(this.state.name);
+    Pixiv.login(this.state.name, this.state.password)
+      .then(this.props.onLogin.bind(this))
+      .catch(console.log);
   }
 
   render() {
-    return <div>
+    return <div id="login-root">
       <input type="text"
         onChange={this.setName.bind(this)}
-        placeholder="user name or email" />
+        placeholder="username or email" />
       <input type="password"
         onChange={this.setPass.bind(this)}
         placeholder="password" />
       <button onClick={this.submit.bind(this)}>
-        Submit
+        submit
       </button>
     </div>;
   }

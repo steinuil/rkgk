@@ -250,51 +250,102 @@ namespace RawAPI {
 const root = 'https://oauth.secure.pixiv.net/'
 
 
-function request(method: Ajax.Method, url: string, data?: any) {
-  return Ajax.request(method, 'http://localhost:9292/' + encodeURI(url), data);
+function request(
+  method: Ajax.Method, url: string, headers?: Array<[string, string]>, data?: any
+): Promise<string> {
+  return Ajax.request(method, 'http://localhost:9292/' + encodeURI(url), headers, data);
 }
 
 
-export function login(name: string, password: string) {
-  return request(Ajax.Method.POST, root + 'auth/token', {
-    get_secure_url: 'true',
-    client_id: 'MOBrBDS8blbauoSck0ZfDbtuzpyT',
-    client_secret: 'lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj',
-    grant_type: 'password',
-    username: name,
-    password: password
-  })
+export interface Tokens {
+  access: string;
+  refresh: string;
+  expires: Date;
+}
+
+
+function toTokens(r: RawAPI.Login): Tokens {
+  const now = new Date();
+  const expires = new Date(
+    now.getTime() + (r.response.expires_in * 1000)
+  );
+
+  return {
+    access: r.response.access_token,
+    refresh: r.response.refresh_token,
+    expires: expires
+  };
+}
+
+
+export interface MyInfo {
+  name: string;
+  nick: string;
+  id: number;
+  email: string;
+  avatar: {
+    big: string;
+    medium: string;
+    small: string;
+  }
+}
+
+
+function toMyInfo(r: RawAPI.Login): MyInfo {
+  const user = r.response.user;
+  return {
+    name: user.account,
+    nick: user.name,
+    id: parseInt(user.id),
+    email: user.main_address,
+    avatar: {
+      big: user.profile_image_urls.px_170x170,
+      medium: user.profile_image_urls.px_50x50,
+      small: user.profile_image_urls.px_16x16
+    }
+  }
+}
+
+
+export function login(name: string, password: string): Promise<[Tokens, MyInfo]> {
+  return new Promise((resolve, reject) => {
+    request(Ajax.Method.POST, root + 'auth/token', [
+      ["Content-Type", "application/x-www-form-urlencoded"]
+    ], [
+      ['get_secure_url', 'true'],
+      ['client_id', 'MOBrBDS8blbauoSck0ZfDbtuzpyT'],
+      ['client_secret', 'lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj'],
+      ['grant_type', 'password'],
+      ['username', name],
+      ['password', password]
+    ]).then(r => {
+      const resp: RawAPI.Login = JSON.parse(r);
+      resolve([toTokens(resp), toMyInfo(resp)]);
+    }, reject)
+  });
 }
 
 
 export class API {
-  tokens: {
-    refresh: string;
-    access: string;
-    expires: Date;
-  };
+  tokens: Tokens;
 
-  init(refreshToken: string, accessToken?: string, expires?: Date): Promise<API> {
+  init(
+    refreshToken: string, accessToken?: string, expires?: Date
+  ): Promise<[API, MyInfo | null]> {
     return new Promise((resolve, reject) => {
       if (!(accessToken && expires) || (new Date()) > expires) {
         this.refresh(refreshToken)
           .then(resp => {
-            const now = new Date();
             const response: RawAPI.Login = JSON.parse(resp);
-            expires = new Date(
-              now.getTime() + (response.response.expires_in * 1000)
-            );
-
-            this.tokens = {
-              refresh: response.response.refresh_token,
-              access: response.response.access_token,
-              expires: expires
-            };
-
-            resolve(this);
+            this.tokens = toTokens(response);
+            resolve([this, toMyInfo(response)]);
           })
           .catch(({ status, body }) => {
-            reject(JSON.parse(body));
+            try {
+              reject(JSON.parse(body));
+            } catch (_) {
+              reject("Couldn't connect");
+            }
           });
       } else {
         this.tokens = {
@@ -303,18 +354,20 @@ export class API {
           expires: expires
         };
 
-        resolve(this);
+        resolve([this, null]);
       }
     });
   }
 
   refresh(refreshToken: string) {
-    return request(Ajax.Method.POST, root + 'auth/token', {
-      get_secure_url: 'true',
-      client_id: 'MOBrBDS8blbauoSck0ZfDbtuzpyT',
-      client_secret: 'lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj',
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken
-    })
+    return request(Ajax.Method.POST, root + 'auth/token', [
+      ["Content-Type", "application/x-www-form-urlencoded"]
+    ], [
+      ['get_secure_url', 'true'],
+      ['client_id', 'MOBrBDS8blbauoSck0ZfDbtuzpyT'],
+      ['client_secret', 'lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj'],
+      ['grant_type', 'refresh_token'],
+      ['refresh_token', refreshToken]
+    ])
   }
 }

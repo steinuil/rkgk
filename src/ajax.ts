@@ -20,10 +20,26 @@ function string_of_Method(m: Method): string {
 }
 
 
-export function request(method: Method, url: string, data?: any): Promise<string> {
+export function request(
+  method: Method, url: string, headers?: Array<[string, string]>, data?: any
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open(string_of_Method(method), url);
+
+    let params: any = data;
+
+    if (data instanceof Array) {
+      params = data.map(([name, content]) =>
+        encodeURIComponent(name) + '=' + encodeURIComponent(content)
+      ).join('&');
+    }
+
+    if (headers) {
+      for (const [name, content] of headers) {
+        xhr.setRequestHeader(name, content);
+      }
+    }
 
     xhr.addEventListener('load', e => {
       const target = e.target as XMLHttpRequest;
@@ -40,6 +56,6 @@ export function request(method: Method, url: string, data?: any): Promise<string
       reject({ status: status, body: responseText });
     });
 
-    xhr.send(data);
+    xhr.send(params);
   });
 }
