@@ -2,20 +2,6 @@ import * as Ajax from "./ajax";
 
 
 namespace RawAPI {
-  type url  = string;
-  type date = string;
-  type maybeString = string;
-  type maybeNumber = number;
-  type publicity = string;
-
-
-  enum SexualContent {
-    SafeForWork = 2,
-    Sexual = 4,
-    Grotesque = 6
-  }
-
-
   export interface Login {
     response: {
       access_token: string;
@@ -41,7 +27,7 @@ namespace RawAPI {
   }
 
 
-  interface Error {
+  export interface Error {
     error: {
       user_message: string;
       message: string;
@@ -51,7 +37,7 @@ namespace RawAPI {
   }
 
 
-  interface Work {
+  export interface Work {
     id: number;
     title: string;
     caption: string;
@@ -61,9 +47,9 @@ namespace RawAPI {
     tags: Array<{ name: string; }>;
 
     image_urls: {
-      square_medium: url;
-      medium: url;
-      large: url;
+      square_medium: string;
+      medium: string;
+      large: string;
     };
 
     restrict: number;
@@ -78,32 +64,52 @@ namespace RawAPI {
   }
 
 
-  interface Illust extends Work {
-    type: string; // illust | manga | ugoira
+  export type Illust = SingleIllust | MultiIllust;
+
+  export type IllustType = "illust" | "manga" | "ugoira";
+
+  enum SexualContent { SafeForWork = 2, Sexual = 4, Grotesque = 6 }
+
+  interface BaseIllust extends Work {
+    type: IllustType;
     tools: Array<string>;
-
-    meta_single_page: { original_image_url: url; } | null;
-    meta_pages: Array<{
-      square_medium: url;
-      medium: url;
-      large: url;
-      original: url;
-    }>;
-
     width: number;
     height: number;
-
     sanity_level: SexualContent;
   }
 
+  // To make Illust type-safe we consider illusts with only one page
+  // and illusts with multiple as different types.
+  interface SingleIllust extends BaseIllust {
+    meta_single_page: { original_image_url: string; };
+    meta_pages: null;
+  }
 
-  interface Novel extends Work {
+  interface MultiIllust extends BaseIllust {
+    meta_single_page: null;
+    meta_pages: Array<{
+      square_medium: string;
+      medium: string;
+      large: string;
+      original: string;
+    }>;
+  }
+
+
+  export interface Novel extends Work {
     text_length: number;
     series: {
       id: number;
-      title: number;
+      title: string;
     };
   }
+
+
+  type url = string;
+  type maybeString = "" | string;
+  type maybeNumber = 0 | number;
+  type date = string;
+  export type publicity = "public" | "private";
 
 
   interface User {
@@ -303,7 +309,98 @@ function toMyInfo(r: RawAPI.Login): MyInfo {
       medium: user.profile_image_urls.px_50x50,
       small: user.profile_image_urls.px_16x16
     }
+  };
+}
+
+
+export interface Work {
+  id: number;
+  title: string;
+  caption: string;
+  date: Date;
+  userId: number;
+  pages: number;
+  tags: Array<string>;
+  thumbnail: string;
+  /*bookmarks: number | null;
+  views: number | null;
+  commentCount: number | null;*/
+  bookmarked: boolean;
+}
+
+
+export enum IllustType { Illust, Manga, Ugoira }
+
+
+export enum SexualContent { None = 1, Sexual, Grotesque }
+
+
+export interface Illust extends Work {
+  type: IllustType;
+  tools: Array<string>;
+  images: Array<string>;
+  dimensions: [number, number];
+  sexualContent: SexualContent;
+}
+
+
+export interface Novel extends Work {
+  length: number;
+  series: {
+    id: number;
+    title: string;
+  };
+}
+
+
+function toWork(w: RawAPI.Work): Work {
+  return {
+    id: w.id,
+    title: w.title,
+    caption: w.caption,
+    date: new Date(w.create_date),
+    userId: w.user.id,
+    pages: w.page_count,
+    tags: w.tags.map(x => x.name),
+    thumbnail: w.image_urls.square_medium,
+    bookmarked: w.is_bookmarked
+  };
+}
+
+
+function toIllust(i: RawAPI.Illust): Illust {
+  let illust: Illust = toWork(i) as Illust;
+  illust.tools = i.tools;
+  illust.dimensions = [i.width, i.height];
+  switch (i.type) {
+    case "illust":
+      illust.type = IllustType.Illust;
+      break;
+    case "manga":
+      illust.type = IllustType.Manga;
+      break;
+    case "ugoira":
+      illust.type = IllustType.Ugoira;
+      break;
   }
+
+  if (i.meta_single_page) {
+    illust.images = [i.meta_single_page.original_image_url];
+  } else if (i.meta_pages) {
+    illust.images = i.meta_pages.map(x => x.original);
+  }
+
+  illust.sexualContent = i.sanity_level / 2;
+
+  return illust;
+}
+
+
+function toNovel(n: RawAPI.Novel): Novel {
+  let novel: Novel = toWork(n) as Novel;
+  novel.length = n.text_length;
+  novel.series = n.series;
+  return novel;
 }
 
 

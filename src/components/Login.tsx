@@ -1,4 +1,6 @@
 // Login form window.
+// TODO: reject if the fields are empty or there's other irregularities,
+// error messages
 import * as React from "react";
 import * as Pixiv from "../pixiv";
 
@@ -19,8 +21,8 @@ export class Form extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      name: "steinuil@example.com",
-      password: "password"
+      name: "",
+      password: ""
     };
   }
 
