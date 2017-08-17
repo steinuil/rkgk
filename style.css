@@ -97,3 +97,49 @@ body {
   background-color: #575c55;
 }
 
+
+#browser-root {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+  padding: 3px;
+}
+
+
+.thumbnail {
+  position: relative;
+  width: 360px;
+  height: 360px;
+  display: block;
+  margin: 3px;
+}
+
+.thumbnail .bookmark {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  margin: 8px;
+  height: 1.5em;
+  fill-opacity: .7;
+  stroke-width: 4px;
+}
+
+.bookmark {
+  stroke-linejoin: round;
+}
+
+.bookmark .heart:hover {
+  fill: #acc12f;
+}
+
+.thumbnail .pages {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  opacity: .8;
+
+  background-color: #acc12f;
+  color: #45425a;
+  margin: 8px;
+  padding: .1em .2em;
+}

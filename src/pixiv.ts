@@ -223,7 +223,7 @@ namespace RawAPI {
   }
 
 
-  interface IllustList extends Paged {
+  export interface IllustList extends Paged {
     illusts: Array<Illust>;
   }
 
@@ -253,7 +253,8 @@ namespace RawAPI {
 
 
 
-const root = 'https://oauth.secure.pixiv.net/'
+const authRoot = 'https://oauth.secure.pixiv.net/';
+const root = 'https://app-api.pixiv.net/';
 
 
 function request(
@@ -406,7 +407,7 @@ function toNovel(n: RawAPI.Novel): Novel {
 
 export function login(name: string, password: string): Promise<[Tokens, MyInfo]> {
   return new Promise((resolve, reject) => {
-    request(Ajax.Method.POST, root + 'auth/token', [
+    request(Ajax.Method.POST, authRoot + 'auth/token', [
       ["Content-Type", "application/x-www-form-urlencoded"]
     ], [
       ['get_secure_url', 'true'],
@@ -457,14 +458,55 @@ export class API {
   }
 
   refresh(refreshToken: string) {
-    return request(Ajax.Method.POST, root + 'auth/token', [
-      ["Content-Type", "application/x-www-form-urlencoded"]
+    return request(Ajax.Method.POST, authRoot + 'auth/token', [
+      ['Content-Type', 'application/x-www-form-urlencoded']
     ], [
       ['get_secure_url', 'true'],
       ['client_id', 'MOBrBDS8blbauoSck0ZfDbtuzpyT'],
       ['client_secret', 'lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj'],
       ['grant_type', 'refresh_token'],
       ['refresh_token', refreshToken]
-    ])
+    ]);
   }
+
+
+  feed(): Promise<Array<Illust>> {
+    return new Promise((resolve, reject) => {
+      request(Ajax.Method.GET, root + 'v2/illust/follow?restrict=public', [
+        ['Authorization', `Bearer ${this.tokens.access}`]
+      ])
+        .then(r => {
+          const resp: RawAPI.IllustList = JSON.parse(r);
+          const illusts = resp.illusts.map(i => toIllust(i));
+          resolve(illusts);
+        });
+    });
+  }
+
+  bookmark(id: number) {
+    return request(Ajax.Method.POST, root + 'v2/illust/bookmark/add', [
+      ['Authorization', `Bearer ${this.tokens.access}`],
+      ['Content-Type', 'application/x-www-form-urlencoded']
+    ], [
+      ['illust_id', id.toString()],
+      ['restrict', 'public']
+    ]);
+  }
+
+  unbookmark(id: number) {
+    return request(Ajax.Method.POST, root + 'v2/illust/bookmark/delete', [
+      ['Authorization', `Bearer ${this.tokens.access}`],
+      ['Content-Type', 'application/x-www-form-urlencoded']
+    ], [
+      ['illust_id', id.toString()]
+    ]);
+  }
+}
+
+
+export enum Restrict { Public, Private };
+
+
+export function proxy(url: string) {
+  return 'http://localhost:9292/' + url;
 }
