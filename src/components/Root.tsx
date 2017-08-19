@@ -4,7 +4,7 @@
 import * as React from "react";
 import * as Login from "./Login";
 import * as Pixiv from "../pixiv";
-import { LoadPage } from "./Loading";
+import { LoadPage } from "./Parts";
 import { Browser } from "./Browser";
 
 

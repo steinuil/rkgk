@@ -494,7 +494,7 @@ export class API {
   }
 
   unbookmark(id: number) {
-    return request(Ajax.Method.POST, root + 'v2/illust/bookmark/delete', [
+    return request(Ajax.Method.POST, root + 'v1/illust/bookmark/delete', [
       ['Authorization', `Bearer ${this.tokens.access}`],
       ['Content-Type', 'application/x-www-form-urlencoded']
     ], [
