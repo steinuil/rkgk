@@ -11,9 +11,48 @@ body {
   color: #acc12f;
 }
 
-#root {
+#page-root {
   height: 100vh;
 }
+
+.button {
+  cursor: pointer;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+
+
+#test {
+  position: fixed;
+  top: 0;
+}
+
+
+#notif-box {
+  position: fixed;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: right;
+  margin: 2px;
+}
+
+.notification {
+  margin: 2px;
+  padding: .5em 1em;
+  background-color: #acc12f;
+  color: #45425a;
+  text-align: right;
+  opacity: .7;
+}
+
+.notification:hover {
+  opacity: 1;
+}
+
+
 
 .loader {
   height: 60px;
