@@ -21,14 +21,6 @@ body {
   user-select: none;
 }
 
-
-
-#test {
-  position: fixed;
-  top: 0;
-}
-
-
 #notif-box {
   position: fixed;
   top: 0;
@@ -37,22 +29,41 @@ body {
   flex-flow: column nowrap;
   align-items: right;
   margin: 2px;
+  width: 0;
 }
 
 .notification {
   margin: 2px;
-  padding: .5em 1em;
+  padding: .5em .5em .5em 1em;
   background-color: #acc12f;
   color: #45425a;
   text-align: right;
   opacity: .7;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.notification p {
+  max-width: calc(100vw - 75px);
+  overflow-x: auto;
 }
 
 .notification:hover {
   opacity: 1;
 }
 
+.notification .cross {
+  height: 1em;
+  margin-left: .5em;
+}
 
+.notification .cross line {
+  stroke-width: 5px;
+  stroke-linecap: round;
+  stroke: #45425a;
+}
 
 .loader {
   height: 60px;
@@ -112,27 +123,29 @@ body {
   height: 100%;
 }
 
-#login-root input, #login-root button {
+#login-root .text-box, #login-root .button {
   font-family: inherit;
   font-size: 1.3em;
   margin: .2em;
   text-align: center;
 }
 
-#login-root input {
+#login-root .text-box {
   background-color: #acc12f;
   color: #45425a;
   width: 300px;
   padding: .3em;
 }
 
-#login-root button {
+#login-root .button {
   background-color: inherit;
   color: inherit;
   padding: .2em .5em;
+  display: inline-block;
+  width: auto;
 }
 
-#login-root button:hover {
+#login-root .button:hover {
   background-color: #575c55;
 }
 
@@ -142,6 +155,7 @@ body {
   flex-flow: row wrap;
   justify-content: center;
   padding: 3px;
+  position: relative;
 }
 
 

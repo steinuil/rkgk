@@ -1,23 +1,4 @@
-export const enum Method {
-  GET,
-  POST,
-  PUT,
-  DELETE
-}
-
-
-function string_of_Method(m: Method): string {
-  switch (m) {
-    case Method.GET:
-      return 'GET';
-    case Method.POST:
-      return 'POST';
-    case Method.PUT:
-      return 'PUT';
-    case Method.DELETE:
-      return 'DELETE'
-  }
-}
+export type Method = "GET" | "POST" | "PUT" | "DELETE";
 
 
 export function request(
@@ -25,9 +6,9 @@ export function request(
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open(string_of_Method(method), url);
+    xhr.open(method, url);
 
-    let params: any = data;
+    let params: any;
 
     if (data instanceof Array) {
       params = data.map(([name, content]) =>

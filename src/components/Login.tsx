@@ -12,8 +12,8 @@ export interface State {
 
 
 export interface Props {
-  onLogin: any;
-  //onLogin: ([Pixiv.Tokens, Pixiv.MyInfo]) => void;
+  onLogin: (resp: [Pixiv.Tokens, Pixiv.MyInfo]) => void;
+  notify: (msg: string) => any;
 }
 
 
@@ -37,22 +37,32 @@ export class Form extends React.Component<Props, State> {
   }
 
   submit(ev: React.MouseEvent<HTMLButtonElement>) {
-    Pixiv.login(this.state.name, this.state.password)
-      .then(this.props.onLogin.bind(this))
-      .catch(console.log);
+    ev.preventDefault();
+    if (this.state.name === '' || this.state.password === '')
+      this.props.notify('The login fields can\'t be empty');
+    else if (!navigator.onLine)
+      this.props.notify('You are offline');
+    else
+      Pixiv.login(this.state.name, this.state.password)
+        .then(this.props.onLogin.bind(this))
+        .catch(e => {
+          if (e.slice(0,3) === '103')
+            this.props.notify('Incorrect username or password');
+          else
+            this.props.notify(e);
+        });
   }
 
   render() {
-    return <div id="login-root">
-      <input type="text"
+    return <form id="login-root">
+      <input type="text" className="text-box"
         onChange={this.setName.bind(this)}
         placeholder="username or email" />
-      <input type="password"
+      <input type="password" className="text-box"
         onChange={this.setPass.bind(this)}
         placeholder="password" />
-      <button onClick={this.submit.bind(this)}>
-        submit
-      </button>
-    </div>;
+      <input type="submit" onClick={this.submit.bind(this)}
+        value="submit" className="button" />
+    </form>;
   }
 }

@@ -22,8 +22,13 @@ export interface Notif {
 
 
 const Toast = (props: { notif: Notif, click: (id: number) => any }) =>
-  <div className="notification button" onClick={_ => props.click(props.notif.id)}>
-    {props.notif.message}
+  <div className="notification">
+    <p>{props.notif.message}</p>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50"
+        className="button cross" onClick={_ => props.click(props.notif.id)}>
+      <line x1="5" y1="5" x2="45" y2="45" />
+      <line x1="45" y="5" x2="5" y2="45" />
+    </svg>
   </div>;
 
 
@@ -45,7 +50,6 @@ export class App extends React.Component<{}, State> {
 
     // Attempt to retrieve a previously stored refresh token from localStorage,
     // otherwise set the state to null.
-    /*
     const token = window.localStorage.getItem('rkgk_token');
     if (token) {
       this.state = { api: maybe, account: null, notifs: [] };
@@ -58,11 +62,8 @@ export class App extends React.Component<{}, State> {
           window.localStorage.removeItem('rkgk_token');
         });
     } else {
-    */
       this.state = { api: null, account: null, notifs: [] };
-    /*
     }
-    */
   }
 
   handleLogin(args: [Pixiv.Tokens, Pixiv.MyInfo]) {
@@ -73,10 +74,9 @@ export class App extends React.Component<{}, State> {
   }
 
   notify(message: string) {
-    const num = this.state.notifs.length;
     this.setState({
       notifs: this.state.notifs.concat([
-        mkNotif(message.repeat(num + 1))
+        mkNotif(message)
       ])
     });
   }
@@ -90,20 +90,19 @@ export class App extends React.Component<{}, State> {
   render() {
     const main =
       (this.state.api === null)  ?
-        <Login.Form onLogin={this.handleLogin.bind(this)} />
+        <Login.Form onLogin={this.handleLogin.bind(this)} notify={msg => this.notify(msg)} />
     : (this.state.api === maybe) ?
         <LoadPage text="logging in" />
     : // api is available
         <Browser api={this.state.api} />
 
     return <div id="page-root">
-      <button id="test" onClick={_ => this.notify("test")}>test</button>
+      {main}
       <div id="notif-box">
         {this.state.notifs.map(n =>
           <Toast key={n.id} click={id => this.dismissNotif(id)} notif={n} />
         )}
       </div>
-      {main}
     </div>;
   }
 }
