@@ -43,9 +43,9 @@ export class Form extends React.Component<Props, State> {
     else if (!navigator.onLine)
       this.props.notify('You are offline');
     else
-      Pixiv.login(this.state.name, this.state.password)
-        .then(this.props.onLogin.bind(this))
-        .catch(e => {
+      Pixiv.login(this.state.name, this.state.password).then(
+        this.props.onLogin.bind(this),
+        e => {
           if (e.slice(0,3) === '103')
             this.props.notify('Incorrect username or password');
           else

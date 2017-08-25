@@ -28,13 +28,13 @@ export function request(
       if (status >= 200 && status < 300)
         resolve(responseText);
       else
-        reject({ status: status, body: responseText });
+        reject(responseText);
     });
 
     xhr.addEventListener('error', e => {
       const target = e.target as XMLHttpRequest;
-      const { status, responseText } = target;
-      reject({ status: status, body: responseText });
+      const { responseText } = target;
+      reject(responseText);
     });
 
     xhr.send(params);

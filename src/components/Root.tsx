@@ -53,11 +53,11 @@ export class App extends React.Component<{}, State> {
     const token = window.localStorage.getItem('rkgk_token');
     if (token) {
       this.state = { api: maybe, account: null, notifs: [] };
-      (new Pixiv.API()).init(token)
-        .then(([api, info]) =>
-          this.setState({ api: api, account: info }))
-        .catch(err => {
-          console.log(err);
+      (new Pixiv.API()).init(token).then(
+        ([api, info]) =>
+          this.setState({ api: api, account: info }),
+        err => {
+          this.notify(err);
           this.setState({ api: null });
           window.localStorage.removeItem('rkgk_token');
         });
@@ -66,11 +66,11 @@ export class App extends React.Component<{}, State> {
     }
   }
 
-  handleLogin(args: [Pixiv.Tokens, Pixiv.MyInfo]) {
+  async handleLogin(args: [Pixiv.Tokens, Pixiv.MyInfo]) {
     let [tokens, info] = args;
     window.localStorage.setItem('rkgk_token', tokens.refresh);
-    (new Pixiv.API()).init(tokens.refresh, tokens.access, tokens.expires)
-      .then(([api, _]) => this.setState({ api: api, account: info }));
+    const [api, _] = await (new Pixiv.API()).init(tokens.refresh, tokens.access, tokens.expires);
+    this.setState({ api: api, account: info });
   }
 
   notify(message: string) {
@@ -94,7 +94,7 @@ export class App extends React.Component<{}, State> {
     : (this.state.api === maybe) ?
         <LoadPage text="logging in" />
     : // api is available
-        <Browser api={this.state.api} />
+        <Browser api={this.state.api} notify={msg => this.notify(msg)} />
 
     return <div id="page-root">
       {main}

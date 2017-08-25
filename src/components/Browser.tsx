@@ -5,8 +5,9 @@ import { Heart } from "./Parts";
 
 interface ThumbProps {
   work: Pixiv.Work;
-  bmark: (id: number) => Promise<string>;
-  unbmark: (id: number) => Promise<string>;
+  notify: (message: string) => void;
+  bmark: (id: number) => Promise<void>;
+  unbmark: (id: number) => Promise<void>;
 }
 
 
@@ -16,17 +17,18 @@ class Thumb extends React.Component<ThumbProps,Pixiv.Work> {
     this.state = props.work;
   }
 
-  toggleBookmark() {
+  async toggleBookmark() {
     const d = !this.state.bookmarked;
     // Optimistically handle the event
     this.setState({ bookmarked: d });
 
-    (d ? this.props.bmark : this.props.unbmark)(this.state.id)
-      .then(r => this.setState({ bookmarked: d }))
-      .catch(r => {
-        this.setState({ bookmarked: !d });
-        console.log(r);
-      });
+    try {
+      await (d ? this.props.bmark : this.props.unbmark)(this.state.id);
+      this.setState({ bookmarked: d });
+    } catch(e) {
+      this.setState({ bookmarked: !d });
+      this.props.notify(e);
+    }
   }
 
   render() {
@@ -46,6 +48,7 @@ class Thumb extends React.Component<ThumbProps,Pixiv.Work> {
 
 export interface Props {
   api: Pixiv.API;
+  notify: (message: string) => void;
 }
 
 
@@ -57,11 +60,10 @@ export interface State {
 export class Browser extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    props.api.feed()
-      .then(res => this.setState({
-        list: res
-      }))
-      .catch(e => console.log(e));
+    props.api.feed().then(
+      res => this.setState({ list: res }),
+      this.props.notify
+    );
 
     this.state = {
       list: []
@@ -69,11 +71,12 @@ export class Browser extends React.Component<Props, State> {
   }
 
   render() {
-    return <div id="browser-root">
-      {this.state.list.map(w =>
-        <Thumb key={w.id} work={w}
-          unbmark={id => this.props.api.unbookmark(id)}
-          bmark={id => this.props.api.bookmark(id)} />)}
-    </div>;
+    const main = this.state.list.map(w =>
+      <Thumb key={w.id} work={w}
+        unbmark={id => this.props.api.unbookmark(id)}
+        bmark={id => this.props.api.bookmark(id)}
+        notify={this.props.notify}/>);
+
+    return <div id="browser-root">{main}</div>;
   }
 }

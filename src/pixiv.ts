@@ -77,7 +77,6 @@ export interface Work {
 }
 
 
-
 export type IllustType = "illust" | "manga" | "ugoira";
 
 
@@ -147,24 +146,26 @@ function authRequest(params: Array<[string, string]>): Promise<[Tokens, MyInfo]>
   const authRoot = 'https://oauth.secure.pixiv.net/';
 
   const base = [
-      ['get_secure_url', 'true'],
-      ['client_id', 'MOBrBDS8blbauoSck0ZfDbtuzpyT'],
-      ['client_secret', 'lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj']
-    ]
+    ['get_secure_url', 'true'],
+    ['client_id', 'MOBrBDS8blbauoSck0ZfDbtuzpyT'],
+    ['client_secret', 'lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj']
+  ];
 
   return new Promise((accept, reject) => {
     request('POST', authRoot + 'auth/token', [
       ['Content-Type', 'application/x-www-form-urlencoded']
     ], base.concat(params)
-    ).then (r => {
-      const resp: RawAPI.Login = JSON.parse(r);
-      accept([toTokens(resp), toMyInfo(resp)]);
-    }, e => {
-      try {
-        const err: RawAPI.AuthError = JSON.parse(e.body);
-        reject(err.errors.system.message.toString());
-      } catch(_) { reject('Couldn\'t connect to the server'); }
-    });
+    ).then (
+      r => {
+        const resp: RawAPI.Login = JSON.parse(r);
+        accept([toTokens(resp), toMyInfo(resp)]);
+      },
+      e => {
+        try {
+          const err: RawAPI.AuthError = JSON.parse(e);
+          reject(err.errors.system.message.toString());
+        } catch(_) { reject('Couldn\'t connect to the server'); }
+      });
   });
 }
 
@@ -181,25 +182,67 @@ export function login(name: string, password: string): Promise<[Tokens, MyInfo]>
 export class API {
   tokens: Tokens;
 
-  init(
+  async init(
     refreshToken: string, accessToken?: string, expires?: Date
   ): Promise<[API, MyInfo | null]> {
-    return new Promise((resolve, reject) => {
-      if (!(accessToken && expires) || (new Date()) > expires) {
-        this.refresh(refreshToken)
-          .then(([tokens, info]) => {
-            this.tokens = tokens;
-            resolve([this, info]);
-          }, reject);
-      } else {
-        this.tokens = {
-          refresh: refreshToken,
-          access: accessToken,
-          expires: expires
-        };
-
-        resolve([this, null]);
+    if (!(accessToken && expires) || (new Date()) > expires) {
+      try {
+        const [tokens, info] = await this.refresh(refreshToken);
+        this.tokens = tokens;
+        return [this, info];
+      } catch(e) {
+        throw e;
       }
+    } else {
+      this.tokens = {
+        refresh: refreshToken,
+        access: accessToken,
+        expires: expires
+      };
+      return [this, null];
+    }
+  }
+
+  _apiGet<T>(path: string, params: Array<[string, string]>): Promise<T> {
+    const url = root + path + '?' + params.map(([name, content]) =>
+      encodeURIComponent(name) + '=' + encodeURIComponent(content)
+    ).join('&');
+
+    return new Promise((resolve, reject) => {
+      request('GET', url, [['Authorization', `Bearer ${this.tokens.access}`]]).then(
+        r => {
+          const resp: T = JSON.parse(r);
+          resolve(resp);
+        },
+        e => {
+          try {
+            const err: RawAPI.Error = JSON.parse(e);
+            reject(err.error.user_message);
+          } catch(_) {
+            reject('Couldn\'t connect to the server');
+          }
+        });
+    });
+  }
+
+  _apiPost<T>(path: string, params: Array<[string, string]>): Promise<T> {
+    return new Promise((resolve, reject) => {
+      request('POST', root + path, [
+        ['Authorization', `Bearer ${this.tokens.access}`],
+        ['Content-Type', 'application/x-www-form-urlencoded']
+      ], params).then(
+        r => {
+          const resp: T = JSON.parse(r);
+          resolve(resp);
+        },
+        e => {
+          try {
+            const err: RawAPI.Error = JSON.parse(e);
+            reject(err.error.user_message);
+          } catch(_) {
+            reject('Couldn\'t connect to the server');
+          }
+        });
     });
   }
 
@@ -211,35 +254,31 @@ export class API {
   }
 
   feed(): Promise<Array<Illust>> {
-    return new Promise((resolve, reject) => {
-      request('GET', root + 'v2/illust/follow?restrict=public', [
-        ['Authorization', `Bearer ${this.tokens.access}`]
-      ])
-        .then(r => {
-          const resp: RawAPI.IllustList = JSON.parse(r);
-          const illusts = resp.illusts.map(i => toIllust(i));
-          resolve(illusts);
-        });
-    });
+    return new Promise((resolve, reject) =>
+      this._apiGet<RawAPI.IllustList>('v2/illust/follow', [
+        ['restrict', 'public']
+      ]).then(
+        resp => resolve(resp.illusts.map(i => toIllust(i))),
+        reject
+      )
+    );
   }
 
-  bookmark(id: number) {
-    return request('POST', root + 'v2/illust/bookmark/add', [
-      ['Authorization', `Bearer ${this.tokens.access}`],
-      ['Content-Type', 'application/x-www-form-urlencoded']
-    ], [
-      ['illust_id', id.toString()],
-      ['restrict', 'public']
-    ]);
+  bookmark(id: number): Promise<void> {
+    return new Promise((resolve, reject) =>
+      this._apiPost<{}>('v2/illust/bookmark/add', [
+        ['illust_id', id.toString()],
+        ['restrict', 'public']
+      ]).then(_ => resolve(), reject)
+    );
   }
 
-  unbookmark(id: number) {
-    return request('POST', root + 'v1/illust/bookmark/delete', [
-      ['Authorization', `Bearer ${this.tokens.access}`],
-      ['Content-Type', 'application/x-www-form-urlencoded']
-    ], [
-      ['illust_id', id.toString()]
-    ]);
+  unbookmark(id: number): Promise<void> {
+    return new Promise((resolve, reject) =>
+      this._apiPost<{}>('v1/illust/bookmark/delete', [
+        ['illust_id', id.toString()]
+      ]).then(_ => resolve(), reject)
+    );
   }
 }
 
