@@ -1,31 +1,145 @@
 import * as Ajax from "./ajax";
 
 
-function request(
-  method: Ajax.Method, url: string, headers?: Array<[string, string]>, data?: any
-): Promise<string> {
-  return Ajax.request(method, 'http://localhost:9292/' + encodeURI(url), headers, data);
-}
+// API {{{
+export class API {
+  tokens: Tokens;
+  onInvalidToken: () => any;
 
 
+  constructor(handleInvalidToken?: () => any, tokens?: Tokens) {
+    if (!handleInvalidToken || !tokens)
+      throw new Error('Pixiv.API cannot be called directly, use API.init');
+
+    this.tokens = tokens;
+    this.onInvalidToken = handleInvalidToken;
+  }
+
+
+  // Factory for Pixiv.API
+  static async init(f: () => any, refreshToken: string): Promise<[API, MyInfo]>;
+  static async init(f: () => any, t: { refresh: string, access: string, expires: Date }): Promise<API>;
+  static async init(f: () => any, credentials: { name: string, pass: string }): Promise<[API, MyInfo]>;
+  static async init(f: any, t: any): Promise<any> {
+    if (typeof t === 'string' || (t.expires && t.expires > new Date())) {
+      // Try to log in with refresh token
+      const refreshToken = (t.expires) ? t.refresh : t;
+      try {
+        const [tokens, info] = await refresh(refreshToken);
+        return [new API(f,tokens), info];
+
+      } catch (err) { throw err; }
+
+    } else if (t.refresh && t.access && t.expires) {
+      // Already logged in
+      return new API(f,t);
+
+    } else if (t.name && t.pass) {
+      // Try to log in with credentials
+      try {
+        const [tokens, info] = await authRequest([
+          ['grant_type', 'password'],
+          ['username', t.name],
+          ['password', t.pass]
+        ]);
+        return [new API(f,tokens), info];
+      } catch (err) {
+        if (err.slice(0,3) === '103')
+          throw 'Incorrect username or password';
+        else throw err;
+      }
+    }
+  }
+
+
+  // throws string, Error
+  async perform<T>(method: 'GET' | 'POST', path: string, params: Array<[string, string]>): Promise<T> {
+    try {
+      if (this.tokens.expires > new Date()) {
+        const [tokens, info] = await refresh(this.tokens.refresh);
+        this.tokens = tokens;
+      }
+    } catch (_) {
+      // Token is invalid, fuck outta here
+      throw this.onInvalidToken();
+    }
+
+    let headers: Array<[string, string]> = [
+      ['Authorization', `Bearer ${this.tokens.access}`]
+    ];
+
+    let url = path;
+    let data = params;
+
+    if (method === 'POST') {
+      headers.push(['Content-Type', 'application/x-www-form-urlencoded']);
+    } else {
+      url = path + '?' + params.map(([name, content]) =>
+        encodeURIComponent(name) + '=' + encodeURIComponent(content)
+      ).join('&');
+      data = [];
+    }
+
+    try {
+      const resp: T = JSON.parse(
+        await request(method, 'https://app-api.pixiv.net/' + url, headers, data));
+      return resp;
+    } catch (e) {
+      let err: Raw.Error;
+
+      try {
+        err = JSON.parse(e);
+      } catch (_) {
+        throw 'Couldn\'t connect to the server';
+      }
+
+      if (err.error.message.slice(-13) === 'invalid_grant')
+        throw this.onInvalidToken();
+      else if (err.error.user_message !== '')
+        throw err.error.user_message;
+      else
+        throw err.error.user_message;
+    }
+  }
+
+
+  // Endpoints
+  async feed(): Promise<Array<Illust>> {
+    try {
+      const resp = await this.perform<Raw.IllustList>
+        ('GET', 'v2/illust/follow', [['restrict', 'public']]);
+
+      return resp.illusts.map(i => to.Illust(i));
+    } catch (err) { throw err; }
+  }
+
+
+  async bookmark(id: number): Promise<void> {
+    try {
+      this.perform<{}>('POST', 'v2/illust/bookmark/add', [
+        ['illust_id', id.toString()],
+        ['restrict', 'public']
+      ]);
+    } catch (err) { throw err; }
+  }
+
+
+  async unbookmark(id: number): Promise<void> {
+    try {
+      this.perform<{}>('POST', 'v1/illust/bookmark/delete', [
+        ['illust_id', id.toString()]
+      ]);
+    } catch (err) { throw err; }
+  }
+} // }}}
+
+
+
+// Types {{{
 export interface Tokens {
   access: string;
   refresh: string;
   expires: Date;
-}
-
-
-function toTokens(r: RawAPI.Login): Tokens {
-  const now = new Date();
-  const expires = new Date(
-    now.getTime() + (r.response.expires_in * 1000)
-  );
-
-  return {
-    access: r.response.access_token,
-    refresh: r.response.refresh_token,
-    expires: expires
-  };
 }
 
 
@@ -39,22 +153,6 @@ export interface MyInfo {
     medium: string;
     small: string;
   }
-}
-
-
-function toMyInfo(r: RawAPI.Login): MyInfo {
-  const user = r.response.user;
-  return {
-    name: user.account,
-    nick: user.name,
-    id: parseInt(user.id),
-    email: user.main_address,
-    avatar: {
-      big: user.profile_image_urls.px_170x170,
-      medium: user.profile_image_urls.px_50x50,
-      small: user.profile_image_urls.px_16x16
-    }
-  };
 }
 
 
@@ -80,6 +178,9 @@ export type IllustType = "illust" | "manga" | "ugoira";
 export enum SexualContent { None = 1, Sexual, Grotesque }
 
 
+export enum Restrict { Public, Private };
+
+
 export interface Illust extends Work {
   type: IllustType;
   tools: Array<string>;
@@ -95,242 +196,12 @@ export interface Novel extends Work {
     id: number;
     title: string;
   };
-}
-
-
-function toWork(w: RawAPI.Work): Work {
-  return {
-    id: w.id,
-    title: w.title,
-    caption: w.caption,
-    date: new Date(w.create_date),
-    userId: w.user.id,
-    pages: w.page_count,
-    tags: w.tags.map(x => x.name),
-    thumbnail: w.image_urls.square_medium,
-    bookmarked: w.is_bookmarked
-  };
-}
-
-
-function toIllust(i: RawAPI.Illust): Illust {
-  let illust: Illust = toWork(i) as Illust;
-  illust.tools = i.tools;
-  illust.dimensions = [i.width, i.height];
-  illust.type = i.type;
-
-  if (i.meta_single_page) {
-    illust.images = [i.meta_single_page.original_image_url];
-  } else if (i.meta_pages) {
-    illust.images = i.meta_pages.map(x => x.original);
-  }
-
-  illust.sexualContent = i.sanity_level / 2;
-
-  return illust;
-}
-
-
-function toNovel(n: RawAPI.Novel): Novel {
-  let novel: Novel = toWork(n) as Novel;
-  novel.length = n.text_length;
-  novel.series = n.series;
-  return novel;
-}
-
-
-function authRequest(params: Array<[string, string]>): Promise<[Tokens, MyInfo]> {
-  const authRoot = 'https://oauth.secure.pixiv.net/';
-
-  const base = [
-    ['get_secure_url', 'true'],
-    ['client_id', 'MOBrBDS8blbauoSck0ZfDbtuzpyT'],
-    ['client_secret', 'lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj']
-  ];
-
-  return new Promise((accept, reject) => {
-    request('POST', authRoot + 'auth/token', [
-      ['Content-Type', 'application/x-www-form-urlencoded']
-    ], base.concat(params)
-    ).then (
-      r => {
-        const resp: RawAPI.Login = JSON.parse(r);
-        accept([toTokens(resp), toMyInfo(resp)]);
-      },
-      e => {
-        try {
-          const err: RawAPI.AuthError = JSON.parse(e);
-          reject(err.errors.system.message.toString());
-        } catch(_) { reject('Couldn\'t connect to the server'); }
-      });
-  });
-}
-
-
-function login(name: string, password: string): Promise<[Tokens, MyInfo]> {
-  return authRequest([
-    ['grant_type', 'password'],
-    ['username', name],
-    ['password', password]
-  ]);
-}
-
-
-function refresh(refreshToken: string) {
-  return authRequest([
-    ['grant_type', 'refresh_token'],
-    ['refresh_token', refreshToken]
-  ]);
-}
+} // }}}
 
 
 
-export class API {
-  tokens: Tokens;
-
-
-  constructor(tokens?: Tokens) {
-    if (!tokens)
-      throw new Error('Pixiv.API cannot be called directly, use API.init');
-    else
-      this.tokens = tokens;
-  }
-
-
-  // Factory for Pixiv.API
-  static async init(refreshToken: string): Promise<[API, MyInfo]>;
-  static async init(tokens: { refresh: string, access: string, expires: Date }): Promise<API>;
-  static async init(credentials: { name: string, pass: string }): Promise<[API, MyInfo]>;
-  static async init(t: any): Promise<any> {
-    if (typeof t === 'string' || (t.expires && t.expires > new Date())) {
-      // Try to log in with refresh token
-      const refreshToken = (t.expires) ? t.refresh : t;
-      try {
-        const [tokens, info] = await refresh(refreshToken);
-        return [new API(tokens), info];
-
-      } catch (err) { throw err; }
-
-    } else if (t.refresh && t.access && t.expires) {
-      // Already logged in
-      return new API(t);
-
-    } else if (t.name && t.pass) {
-      // Try to log in with credentials
-      const [tokens, info] = await authRequest([
-        ['grant_type', 'password'],
-        ['username', t.name],
-        ['password', t.pass]
-      ]);
-      return [new API(tokens), info];
-    }
-  }
-
-
-  ///////////////////
-  // API ENDPOINTS
-
-  async feed(): Promise<Array<Illust>> {
-    try {
-      const resp = await this._apiGET<RawAPI.IllustList>
-        ('v2/illust/follow', [['restrict', 'public']]);
-
-      return resp.illusts.map(i => toIllust(i));
-
-    } catch (err) { throw err; }
-  }
-
-
-  async bookmark(id: number): Promise<void> {
-    try {
-      this._apiPOST<{}>('v2/illust/bookmark/add', [
-        ['illust_id', id.toString()],
-        ['restrict', 'public']
-      ]);
-    } catch (err) { throw err; }
-  }
-
-
-  async unbookmark(id: number): Promise<void> {
-    try {
-      this._apiPOST<{}>('v2/illust/bookmark/delete', [
-        ['illust_id', id.toString()]
-      ]);
-    } catch (err) { throw err; }
-  }
-
-
-  // throws string, Error
-  async _apiReq<T>(method: 'GET' | 'POST', url: string, params: Array<[string, string]>): Promise<T> {
-    try {
-      if (this.tokens.expires > new Date()) {
-        const [tokens, info] = await refresh(this.tokens.refresh);
-        this.tokens = tokens;
-      }
-    } catch (_) {
-      throw new Error('invalid token');
-    }
-
-    let headers: Array<[string, string]> = [
-      ['Authorization', `Bearer ${this.tokens.access}`]
-    ];
-
-    if (method === 'POST') {
-      headers.push(['Content-Type', 'application/x-www-form-urlencoded']);
-    }
-
-    try {
-      const resp: T = JSON.parse(
-        await request(method, 'https://app-api.pixiv.net/' + url, headers, params));
-      return resp;
-    } catch (e) {
-      let err: RawAPI.Error;
-
-      try {
-        err = JSON.parse(e);
-      } catch (_) {
-        throw 'Couldn\'t connect to the server';
-      }
-
-      throw err.error.user_message;
-    }
-  }
-
-
-  async _apiGET<T>(path: string, params: Array<[string, string]>): Promise<T> {
-    const url = path + '?' + params.map(([name, content]) =>
-      encodeURIComponent(name) + '=' + encodeURIComponent(content)
-    ).join('&');
-
-    try {
-      return this._apiReq<T>('GET', url, []);
-    } catch (e) {
-      throw e;
-    }
-  }
-
-
-  _apiPOST<T>(path: string, params: Array<[string, string]>): Promise<T> {
-    return this._apiReq<T>('POST', path, params);
-  }
-}
-
-
-
-
-
-export enum Restrict { Public, Private };
-
-
-export function proxy(url: string) {
-  return 'http://localhost:9292/' + url;
-}
-
-
-
-
-
-namespace RawAPI {
+// Raw API types {{{
+namespace Raw {
   export interface Login {
     response: {
       access_token: string;
@@ -587,4 +458,141 @@ namespace RawAPI {
       illust: Illust;
     }>;
   }
+} // }}}
+
+
+
+// Convert functions {{{
+// Functions to convert from API objects to nicer ones.
+namespace to {
+  export function Tokens(r: Raw.Login): Tokens {
+    const now = new Date();
+    const expires = new Date(
+      now.getTime() + (r.response.expires_in * 1000)
+    );
+
+    return {
+      access: r.response.access_token,
+      refresh: r.response.refresh_token,
+      expires: expires
+    };
+  }
+
+
+  export function MyInfo(r: Raw.Login): MyInfo {
+    const user = r.response.user;
+    return {
+      name: user.account,
+      nick: user.name,
+      id: parseInt(user.id),
+      email: user.main_address,
+      avatar: {
+        big: user.profile_image_urls.px_170x170,
+        medium: user.profile_image_urls.px_50x50,
+        small: user.profile_image_urls.px_16x16
+      }
+    };
+  }
+
+
+  export function Work(w: Raw.Work): Work {
+    return {
+      id: w.id,
+      title: w.title,
+      caption: w.caption,
+      date: new Date(w.create_date),
+      userId: w.user.id,
+      pages: w.page_count,
+      tags: w.tags.map(x => x.name),
+      thumbnail: w.image_urls.square_medium,
+      bookmarked: w.is_bookmarked
+    };
+  }
+
+
+  export function Illust(i: Raw.Illust): Illust {
+    let illust: Illust = to.Work(i) as Illust;
+    illust.tools = i.tools;
+    illust.dimensions = [i.width, i.height];
+    illust.type = i.type;
+
+    if (i.meta_single_page) {
+      illust.images = [i.meta_single_page.original_image_url];
+    } else if (i.meta_pages) {
+      illust.images = i.meta_pages.map(x => x.original);
+    }
+
+    illust.sexualContent = i.sanity_level / 2;
+
+    return illust;
+  }
+
+
+  function Novel(n: Raw.Novel): Novel {
+    let novel: Novel = to.Work(n) as Novel;
+    novel.length = n.text_length;
+    novel.series = n.series;
+    return novel;
+  }
+} // }}}
+
+
+
+// Auth helper functions {{{
+function authRequest(params: Array<[string, string]>): Promise<[Tokens, MyInfo]> {
+  const authRoot = 'https://oauth.secure.pixiv.net/';
+
+  const base = [
+    ['get_secure_url', 'true'],
+    ['client_id', 'MOBrBDS8blbauoSck0ZfDbtuzpyT'],
+    ['client_secret', 'lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj']
+  ];
+
+  return new Promise((accept, reject) => {
+    request('POST', authRoot + 'auth/token', [
+      ['Content-Type', 'application/x-www-form-urlencoded']
+    ], base.concat(params)
+    ).then (
+      r => {
+        const resp: Raw.Login = JSON.parse(r);
+        accept([to.Tokens(resp), to.MyInfo(resp)]);
+      },
+      e => {
+        try {
+          const err: Raw.AuthError = JSON.parse(e);
+          reject(err.errors.system.message.toString());
+        } catch(_) { reject('Couldn\'t connect to the server'); }
+      });
+  });
 }
+
+
+function login(name: string, password: string): Promise<[Tokens, MyInfo]> {
+  return authRequest([
+    ['grant_type', 'password'],
+    ['username', name],
+    ['password', password]
+  ]);
+}
+
+
+function refresh(refreshToken: string) {
+  return authRequest([
+    ['grant_type', 'refresh_token'],
+    ['refresh_token', refreshToken]
+  ]);
+} // }}}
+
+
+
+// Cancer {{{
+export function proxy(url: string) {
+  return 'http://localhost:9292/' + url;
+}
+
+
+function request(
+  method: Ajax.Method, url: string, headers?: Array<[string, string]>, data?: any
+): Promise<string> {
+  return Ajax.request(method, 'http://localhost:9292/' + encodeURI(url), headers, data);
+} // }}}

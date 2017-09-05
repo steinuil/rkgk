@@ -4,13 +4,10 @@
 import * as React from 'react';
 import * as Pixiv from '../pixiv';
 import { LoadPage } from './Parts';
-import { Browser } from './Browser';
 
 
 
-////////////////
-// LOGIN FORM
-////////////////
+// Login form {{{
 namespace Login {
   export interface State {
     name: string;
@@ -19,7 +16,7 @@ namespace Login {
 
 
   export interface Props {
-    onLogin: (resp: [Pixiv.API, Pixiv.MyInfo]) => void;
+    onSubmit: (name: string, pass: string) => void;
     notify: (msg: string) => any;
   }
 
@@ -53,20 +50,8 @@ namespace Login {
         this.props.notify('The login fields can\'t be empty');
       else if (!navigator.onLine)
         this.props.notify('You are offline');
-      else {
-        // Try to log in from inside the form, so we can handle
-        // failure by not changing anything.
-        try {
-          // Success!
-          this.props.onLogin(await Pixiv.API.init(this.state));
-
-        } catch(err) {
-          if (err.slice(0,3) === '103')
-            this.props.notify('Incorrect username or password');
-          else
-            this.props.notify(err);
-        }
-      }
+      else
+        this.props.onSubmit(this.state.name, this.state.pass);
     }
 
 
@@ -85,13 +70,11 @@ namespace Login {
       </form>;
     }
   }
-}
+} // }}}
 
 
 
-///////////////////
-// NOTIFICATIONS
-///////////////////
+// Notifications {{{
 export namespace Notif {
   export interface t {
     id: number;
@@ -120,13 +103,11 @@ export namespace Notif {
         <line x1="45" y="5" x2="5" y2="45" />
       </svg>
     </div>;
-}
+} // }}}
 
 
 
-//////////////
-// ROOT APP
-//////////////
+// Root app {{{
 export type Status<T> = null | 'maybe' | T;
 
 
@@ -147,18 +128,31 @@ export class App extends React.Component<{}, State> {
 
     if (token) {
       this.state = { api: 'maybe', account: null, notifs: [] };
-      Pixiv.API.init(token).then(
+      Pixiv.API.init(this.handleInvalidToken.bind(this), token).then(
         this.handleLogin.bind(this),
-
-        err => {
-          this.notify(err);
-          this.setState({ api: null });
-          window.localStorage.removeItem('rkgk_token');
-        });
-
+        this.handleInvalidToken.bind(this)
+      );
     } else {
       this.state = { api: null, account: null, notifs: [] };
     }
+  }
+
+
+  handleInvalidToken(err?: string) {
+    this.notify(err ? err : 'Invalid token, try logging in again');
+    this.setState({ api: null });
+    window.localStorage.removeItem('rkgk_token');
+  }
+
+
+  handleCredentials(name: string, pass: string) {
+    Pixiv.API.init(
+      this.handleInvalidToken.bind(this),
+      { name: name, pass: pass }
+    ).then(
+      this.handleLogin.bind(this),
+      this.handleInvalidToken.bind(this)
+    );
   }
 
 
@@ -169,7 +163,8 @@ export class App extends React.Component<{}, State> {
   }
 
 
-  notify(message: string) {
+  notify(message?: string) {
+    if (!message) return;
     const notif = Notif.make(message);
     this.setState({
       notifs: this.state.notifs.concat([notif])
@@ -185,14 +180,21 @@ export class App extends React.Component<{}, State> {
 
 
   getMain() {
+
     if (!this.state.api)
-      return <Login.Form onLogin={this.handleLogin.bind(this)}
-          notify={msg => this.notify(msg)} />;
+      return <Login.Form notify={this.notify.bind(this)}
+          onSubmit={this.handleCredentials.bind(this)} />;
+    else if (this.state.api === 'maybe')
+      return <LoadPage text='logging in' />;
+    else
+      return <div>ay lamo</div>;
+    /*
     else if (this.state.api === 'maybe')
       return <LoadPage text='logging in' />;
     else
       return <Browser api={this.state.api}
           notify={msg => this.notify(msg)} />;
+          */
   }
 
 
@@ -209,4 +211,4 @@ export class App extends React.Component<{}, State> {
       </div>
     </div>;
   }
-}
+} // }}}

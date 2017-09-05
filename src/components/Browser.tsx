@@ -1,3 +1,4 @@
+/*
 import * as React from 'react';
 import * as Pixiv from '../pixiv';
 import { Heart } from './Parts';
@@ -83,3 +84,4 @@ export class Browser extends React.Component<Props, State> {
     return <div id="browser-root">{main}</div>;
   }
 }
+*/
