@@ -1,9 +1,6 @@
 import * as Ajax from "./ajax";
 
 
-const root = 'https://app-api.pixiv.net/';
-
-
 function request(
   method: Ajax.Method, url: string, headers?: Array<[string, string]>, data?: any
 ): Promise<string> {
@@ -170,7 +167,7 @@ function authRequest(params: Array<[string, string]>): Promise<[Tokens, MyInfo]>
 }
 
 
-export function login(name: string, password: string): Promise<[Tokens, MyInfo]> {
+function login(name: string, password: string): Promise<[Tokens, MyInfo]> {
   return authRequest([
     ['grant_type', 'password'],
     ['username', name],
@@ -179,108 +176,147 @@ export function login(name: string, password: string): Promise<[Tokens, MyInfo]>
 }
 
 
+function refresh(refreshToken: string) {
+  return authRequest([
+    ['grant_type', 'refresh_token'],
+    ['refresh_token', refreshToken]
+  ]);
+}
+
+
+
 export class API {
   tokens: Tokens;
 
-  async init(
-    refreshToken: string, accessToken?: string, expires?: Date
-  ): Promise<[API, MyInfo | null]> {
-    if (!(accessToken && expires) || (new Date()) > expires) {
+
+  constructor(tokens?: Tokens) {
+    if (!tokens)
+      throw new Error('Pixiv.API cannot be called directly, use API.init');
+    else
+      this.tokens = tokens;
+  }
+
+
+  // Factory for Pixiv.API
+  static async init(refreshToken: string): Promise<[API, MyInfo]>;
+  static async init(tokens: { refresh: string, access: string, expires: Date }): Promise<API>;
+  static async init(credentials: { name: string, pass: string }): Promise<[API, MyInfo]>;
+  static async init(t: any): Promise<any> {
+    if (typeof t === 'string' || (t.expires && t.expires > new Date())) {
+      // Try to log in with refresh token
+      const refreshToken = (t.expires) ? t.refresh : t;
       try {
-        const [tokens, info] = await this.refresh(refreshToken);
-        this.tokens = tokens;
-        return [this, info];
-      } catch(e) {
-        throw e;
-      }
-    } else {
-      this.tokens = {
-        refresh: refreshToken,
-        access: accessToken,
-        expires: expires
-      };
-      return [this, null];
+        const [tokens, info] = await refresh(refreshToken);
+        return [new API(tokens), info];
+
+      } catch (err) { throw err; }
+
+    } else if (t.refresh && t.access && t.expires) {
+      // Already logged in
+      return new API(t);
+
+    } else if (t.name && t.pass) {
+      // Try to log in with credentials
+      const [tokens, info] = await authRequest([
+        ['grant_type', 'password'],
+        ['username', t.name],
+        ['password', t.pass]
+      ]);
+      return [new API(tokens), info];
     }
   }
 
-  _apiGet<T>(path: string, params: Array<[string, string]>): Promise<T> {
-    const url = root + path + '?' + params.map(([name, content]) =>
+
+  ///////////////////
+  // API ENDPOINTS
+
+  async feed(): Promise<Array<Illust>> {
+    try {
+      const resp = await this._apiGET<RawAPI.IllustList>
+        ('v2/illust/follow', [['restrict', 'public']]);
+
+      return resp.illusts.map(i => toIllust(i));
+
+    } catch (err) { throw err; }
+  }
+
+
+  async bookmark(id: number): Promise<void> {
+    try {
+      this._apiPOST<{}>('v2/illust/bookmark/add', [
+        ['illust_id', id.toString()],
+        ['restrict', 'public']
+      ]);
+    } catch (err) { throw err; }
+  }
+
+
+  async unbookmark(id: number): Promise<void> {
+    try {
+      this._apiPOST<{}>('v2/illust/bookmark/delete', [
+        ['illust_id', id.toString()]
+      ]);
+    } catch (err) { throw err; }
+  }
+
+
+  // throws string, Error
+  async _apiReq<T>(method: 'GET' | 'POST', url: string, params: Array<[string, string]>): Promise<T> {
+    try {
+      if (this.tokens.expires > new Date()) {
+        const [tokens, info] = await refresh(this.tokens.refresh);
+        this.tokens = tokens;
+      }
+    } catch (_) {
+      throw new Error('invalid token');
+    }
+
+    let headers: Array<[string, string]> = [
+      ['Authorization', `Bearer ${this.tokens.access}`]
+    ];
+
+    if (method === 'POST') {
+      headers.push(['Content-Type', 'application/x-www-form-urlencoded']);
+    }
+
+    try {
+      const resp: T = JSON.parse(
+        await request(method, 'https://app-api.pixiv.net/' + url, headers, params));
+      return resp;
+    } catch (e) {
+      let err: RawAPI.Error;
+
+      try {
+        err = JSON.parse(e);
+      } catch (_) {
+        throw 'Couldn\'t connect to the server';
+      }
+
+      throw err.error.user_message;
+    }
+  }
+
+
+  async _apiGET<T>(path: string, params: Array<[string, string]>): Promise<T> {
+    const url = path + '?' + params.map(([name, content]) =>
       encodeURIComponent(name) + '=' + encodeURIComponent(content)
     ).join('&');
 
-    return new Promise((resolve, reject) => {
-      request('GET', url, [['Authorization', `Bearer ${this.tokens.access}`]]).then(
-        r => {
-          const resp: T = JSON.parse(r);
-          resolve(resp);
-        },
-        e => {
-          try {
-            const err: RawAPI.Error = JSON.parse(e);
-            reject(err.error.user_message);
-          } catch(_) {
-            reject('Couldn\'t connect to the server');
-          }
-        });
-    });
+    try {
+      return this._apiReq<T>('GET', url, []);
+    } catch (e) {
+      throw e;
+    }
   }
 
-  _apiPost<T>(path: string, params: Array<[string, string]>): Promise<T> {
-    return new Promise((resolve, reject) => {
-      request('POST', root + path, [
-        ['Authorization', `Bearer ${this.tokens.access}`],
-        ['Content-Type', 'application/x-www-form-urlencoded']
-      ], params).then(
-        r => {
-          const resp: T = JSON.parse(r);
-          resolve(resp);
-        },
-        e => {
-          try {
-            const err: RawAPI.Error = JSON.parse(e);
-            reject(err.error.user_message);
-          } catch(_) {
-            reject('Couldn\'t connect to the server');
-          }
-        });
-    });
-  }
 
-  refresh(refreshToken: string) {
-    return authRequest([
-      ['grant_type', 'refresh_token'],
-      ['refresh_token', refreshToken]
-    ]);
-  }
-
-  feed(): Promise<Array<Illust>> {
-    return new Promise((resolve, reject) =>
-      this._apiGet<RawAPI.IllustList>('v2/illust/follow', [
-        ['restrict', 'public']
-      ]).then(
-        resp => resolve(resp.illusts.map(i => toIllust(i))),
-        reject
-      )
-    );
-  }
-
-  bookmark(id: number): Promise<void> {
-    return new Promise((resolve, reject) =>
-      this._apiPost<{}>('v2/illust/bookmark/add', [
-        ['illust_id', id.toString()],
-        ['restrict', 'public']
-      ]).then(_ => resolve(), reject)
-    );
-  }
-
-  unbookmark(id: number): Promise<void> {
-    return new Promise((resolve, reject) =>
-      this._apiPost<{}>('v1/illust/bookmark/delete', [
-        ['illust_id', id.toString()]
-      ]).then(_ => resolve(), reject)
-    );
+  _apiPOST<T>(path: string, params: Array<[string, string]>): Promise<T> {
+    return this._apiReq<T>('POST', path, params);
   }
 }
+
+
+
 
 
 export enum Restrict { Public, Private };

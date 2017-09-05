@@ -1,9 +1,11 @@
-import * as React from "react";
-import * as Pixiv from "../pixiv";
-import { Heart } from "./Parts";
+import * as React from 'react';
+import * as Pixiv from '../pixiv';
+import { Heart } from './Parts';
 
 
-interface ThumbProps {
+
+
+export interface ThumbProps {
   work: Pixiv.Work;
   notify: (message: string) => void;
   bmark: (id: number) => Promise<void>;
@@ -11,7 +13,7 @@ interface ThumbProps {
 }
 
 
-class Thumb extends React.Component<ThumbProps,Pixiv.Work> {
+export class Thumb extends React.Component<ThumbProps,Pixiv.Work> {
   constructor(props: ThumbProps) {
     super(props);
     this.state = props.work;
@@ -70,12 +72,13 @@ export class Browser extends React.Component<Props, State> {
     };
   }
 
+
   render() {
     const main = this.state.list.map(w =>
       <Thumb key={w.id} work={w}
-        unbmark={id => this.props.api.unbookmark(id)}
-        bmark={id => this.props.api.bookmark(id)}
-        notify={this.props.notify}/>);
+          unbmark={id => this.props.api.unbookmark(id)}
+          bmark={id => this.props.api.bookmark(id)}
+          notify={this.props.notify}/>);
 
     return <div id="browser-root">{main}</div>;
   }
