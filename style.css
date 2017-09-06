@@ -151,13 +151,20 @@ body {
 
 
 #browser-root {
+  padding: 3px;
+}
+
+#browser-root nav {
+  display: flex;
+  justify-content: center;
+}
+
+#browser-root main {
   display: flex;
   flex-flow: row wrap;
   justify-content: center;
-  padding: 3px;
   position: relative;
 }
-
 
 .thumbnail {
   position: relative;

@@ -93,9 +93,11 @@ export class API {
         throw 'Couldn\'t connect to the server';
       }
 
-      if (err.error.message.slice(-13) === 'invalid_grant')
-        throw this.onInvalidToken();
-      else if (err.error.user_message !== '')
+      if (err.error.message.slice(-13) === 'invalid_grant') {
+        // Forcefully invalidate the token and retry the request
+        this.tokens.expires = new Date(0);
+        return await this.perform<T>(method, path, params);
+      } else if (err.error.user_message !== '')
         throw err.error.user_message;
       else
         throw err.error.user_message;

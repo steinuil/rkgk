@@ -3,7 +3,7 @@
 // the main page or the login page accordingly.
 import * as React from 'react';
 import * as Pixiv from '../pixiv';
-import { LoadPage } from './Parts';
+import { LoadPage, Heart } from './Parts';
 
 
 
@@ -107,6 +107,115 @@ export namespace Notif {
 
 
 
+// Thumbnail {{{
+namespace Thumb {
+  export interface Props {
+    work: Pixiv.Work;
+    notify: (message: string) => void;
+    bmark: (id: number) => Promise<void>;
+    unbmark: (id: number) => Promise<void>;
+    onClick: (work: Pixiv.Work) => any;
+  }
+
+
+  export class Thumb extends React.Component<Props, Pixiv.Work> {
+    constructor(props: Props) {
+      super(props);
+      this.state = props.work;
+    }
+
+
+    async toggleBookmark() {
+      const d = !this.state.bookmarked;
+      this.setState({ bookmarked: d });
+
+      try {
+        await (d ? this.props.bmark : this.props.unbmark)(this.state.id);
+        this.setState({ bookmarked: d });
+      } catch (err) {
+        this.setState({ bookmarked: !d });
+        this.props.notify(err);
+      }
+    }
+
+
+    render() {
+      const count = <div className="pages">{this.state.pages}</div>;
+      const bmark = <Heart classes="bookmark"
+        click={_ => this.toggleBookmark.bind(this)()}
+        color={this.state.bookmarked ? "#acc12f" : "white"} />;
+
+      return <a className="thumbnail link illust"
+          onClick={() => this.props.onClick(this.state)}>
+        <img src={Pixiv.proxy(this.state.thumbnail)} />
+        {bmark}
+        {this.state.pages > 1 ? count : null}
+      </a>;
+    }
+  }
+} // }}}
+
+
+
+// Browser {{{
+namespace Browser {
+  export interface State {
+    page: null | Page.Works;
+  }
+
+  export interface Props {
+    api: Pixiv.API;
+    notify: (message: string) => void;
+  }
+
+  export class Browser extends React.Component<Props, State> {
+    constructor(props: Props) {
+      super(props);
+      this.state = { page: null };
+
+      props.api.feed().then(
+        res => this.setState({ page: {
+          type: 'works', title: 'My feed', illusts: res
+        } }),
+        this.props.notify
+      );
+    }
+
+    getMain() {
+      if (!this.state.page) return null;
+      switch (this.state.page.type) {
+      case 'works':
+        return this.state.page.illusts.map(w =>
+          <Thumb.Thumb key={w.id} work={w}
+              unbmark={id => this.props.api.unbookmark(id)}
+              bmark={id => this.props.api.bookmark(id)}
+              onClick={w => this.props.notify(w.id.toString())}
+              notify={this.props.notify.bind(this)} />
+        );
+      }
+    }
+
+    render() {
+      return <div id='browser-root'>
+        <nav>
+          Navigationbarrr
+        </nav>
+        <main>{this.getMain()}</main>
+      </div>;
+    }
+  }
+
+  namespace Page {
+    export interface Works {
+      type: 'works';
+      title: string;
+      illusts: Array<Pixiv.Work>;
+    }
+  }
+} // }}}
+
+
+
 // Root app {{{
 export type Status<T> = null | 'maybe' | T;
 
@@ -187,14 +296,8 @@ export class App extends React.Component<{}, State> {
     else if (this.state.api === 'maybe')
       return <LoadPage text='logging in' />;
     else
-      return <div>ay lamo</div>;
-    /*
-    else if (this.state.api === 'maybe')
-      return <LoadPage text='logging in' />;
-    else
-      return <Browser api={this.state.api}
-          notify={msg => this.notify(msg)} />;
-          */
+      return <Browser.Browser api={this.state.api}
+          notify={this.notify.bind(this)} />;
   }
 
 
