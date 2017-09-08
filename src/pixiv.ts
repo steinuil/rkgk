@@ -55,7 +55,7 @@ export class API {
   // throws string, Error
   async perform<T>(method: 'GET' | 'POST', path: string, params: Array<[string, string]>): Promise<T> {
     try {
-      if (this.tokens.expires > new Date()) {
+      if (this.tokens.expires <= new Date()) {
         const [tokens, info] = await refresh(this.tokens.refresh);
         this.tokens = tokens;
       }
@@ -64,25 +64,33 @@ export class API {
       throw this.onInvalidToken();
     }
 
+    // The next part sucks.
+
     let headers: Array<[string, string]> = [
       ['Authorization', `Bearer ${this.tokens.access}`]
     ];
 
     let url = path;
-    let data = params;
+    let data: Array<[string, string]> | null = params;
 
     if (method === 'POST') {
       headers.push(['Content-Type', 'application/x-www-form-urlencoded']);
     } else {
-      url = path + '?' + params.map(([name, content]) =>
-        encodeURIComponent(name) + '=' + encodeURIComponent(content)
-      ).join('&');
-      data = [];
+      if (params.length > 0) {
+        url = path + '?' + params.map(([name, content]) =>
+          encodeURIComponent(name) + '=' + encodeURIComponent(content)
+        ).join('&');
+      }
+
+      data = null;
     }
 
     try {
+      // Happy path
       const resp: T = JSON.parse(
-        await request(method, 'https://app-api.pixiv.net/' + url, headers, data));
+        await request(method, 'https://app-api.pixiv.net/' + url, headers, data)
+      );
+
       return resp;
     } catch (e) {
       let err: Raw.Error;
@@ -105,13 +113,45 @@ export class API {
   }
 
 
-  // Endpoints
-  async feed(): Promise<Array<Illust>> {
-    try {
-      const resp = await this.perform<Raw.IllustList>
-        ('GET', 'v2/illust/follow', [['restrict', 'public']]);
+  nextPage<T, U>(url: string | null, unpack: (r: U) => T): (() => Promise<T>) | null {
+    const path = getUrlPath(url);
+    if (!path) return null;
 
-      return resp.illusts.map(i => to.Illust(i));
+    return () => new Promise((resolve, reject) =>
+      this.perform<U>('GET', path, []).then(
+        resp => resolve(unpack(resp)),
+        reject
+      )
+    );
+  }
+
+
+  // Endpoints
+  async feed(): Promise<Paged<Array<Illust>>> {
+    const unpack: (r: Raw.IllustList) => Paged<Array<Illust>> = (resp) => [
+      resp.illusts.map(i => to.Illust(i)),
+      this.nextPage<Paged<Array<Illust>>, Raw.IllustList>(resp.next_url, unpack)
+    ];
+
+    try {
+      return unpack(
+        await this.perform<Raw.IllustList>
+          ('GET', 'v2/illust/follow', [['restrict', 'public']])
+      );
+    } catch (err) { throw err; }
+  }
+
+
+  async ranking(): Promise<Paged<Array<Illust>>> {
+    const unpack: (r: Raw.IllustList) => Paged<Array<Illust>> = (resp) => [
+      resp.illusts.map(i => to.Illust(i)),
+      this.nextPage<Paged<Array<Illust>>, Raw.IllustList>(resp.next_url, unpack)
+    ];
+
+    try {
+      return unpack(
+        await this.perform<Raw.IllustList>('GET', 'v1/illust/ranking', [])
+      );
     } catch (err) { throw err; }
   }
 
@@ -133,7 +173,15 @@ export class API {
       ]);
     } catch (err) { throw err; }
   }
-} // }}}
+}
+
+
+// Recursive type for paged resources.
+// Contains the resource and a Promise to the next page.
+export type Paged<T> = [
+  T,
+  (() => Promise<Paged<T>>) | null
+]; // }}}
 
 
 
@@ -540,7 +588,7 @@ namespace to {
 
 
 
-// Auth helper functions {{{
+// Auth & helper functions {{{
 function authRequest(params: Array<[string, string]>): Promise<[Tokens, MyInfo]> {
   const authRoot = 'https://oauth.secure.pixiv.net/';
 
@@ -583,6 +631,17 @@ function refresh(refreshToken: string) {
     ['grant_type', 'refresh_token'],
     ['refresh_token', refreshToken]
   ]);
+}
+
+
+
+function getUrlPath(urlString: string | null) {
+  if (!urlString) return null;
+
+  try {
+    const url = new URL(urlString);
+    return url.pathname.slice(1) + url.hash + url.search;
+  } catch (_) { return null; }
 } // }}}
 
 

@@ -145,9 +145,9 @@ namespace Thumb {
         click={_ => this.toggleBookmark.bind(this)()}
         color={this.state.bookmarked ? "#acc12f" : "white"} />;
 
-      return <a className="thumbnail link illust"
-          onClick={() => this.props.onClick(this.state)}>
-        <img src={Pixiv.proxy(this.state.thumbnail)} />
+      return <a className="thumbnail link illust">
+        <img src={Pixiv.proxy(this.state.thumbnail)}
+             onClick={() => this.props.onClick(this.state)} />
         {bmark}
         {this.state.pages > 1 ? count : null}
       </a>;
@@ -174,9 +174,26 @@ namespace Browser {
       this.state = { page: null };
 
       props.api.feed().then(
-        res => this.setState({ page: {
-          type: 'works', title: 'My feed', illusts: res
+        ([res, more]) => this.setState({ page: {
+          type: 'works', illusts: res, nextPage: more, info: { title: 'My feed' }
         } }),
+        this.props.notify
+      );
+    }
+
+    getNextPage() {
+      if (!this.state.page || !this.state.page.nextPage) return;
+      this.state.page.nextPage().then(
+        ([res, more]) => {
+          if (this.state.page) {
+            this.setState({ page: {
+              type: 'works',
+              illusts: this.state.page.illusts.concat(res),
+              nextPage: more,
+              info: this.state.page.info
+            } });
+          }
+        },
         this.props.notify
       );
     }
@@ -189,7 +206,7 @@ namespace Browser {
           <Thumb.Thumb key={w.id} work={w}
               unbmark={id => this.props.api.unbookmark(id)}
               bmark={id => this.props.api.bookmark(id)}
-              onClick={w => this.props.notify(w.id.toString())}
+              onClick={w => this.props.notify(w.title)}
               notify={this.props.notify.bind(this)} />
         );
       }
@@ -198,9 +215,12 @@ namespace Browser {
     render() {
       return <div id='browser-root'>
         <nav>
-          Navigationbarrr
+          {this.state.page ? this.state.page.info.title : 'Top bar'}
         </nav>
         <main>{this.getMain()}</main>
+        <footer>
+          {this.state.page ? <div onClick={() => this.getNextPage.bind(this)()}>more</div> : null}
+        </footer>
       </div>;
     }
   }
@@ -208,8 +228,11 @@ namespace Browser {
   namespace Page {
     export interface Works {
       type: 'works';
-      title: string;
       illusts: Array<Pixiv.Work>;
+      nextPage: (() => Promise<Pixiv.Paged<Array<Pixiv.Work>>>) | null;
+      info: {
+        title: string;
+      }
     }
   }
 } // }}}

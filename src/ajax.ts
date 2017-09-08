@@ -10,7 +10,7 @@ export function request(
 
     let params: any;
 
-    if (data instanceof Array) {
+    if (data instanceof Array && data.length > 0) {
       params = data.map(([name, content]) =>
         encodeURIComponent(name) + '=' + encodeURIComponent(content)
       ).join('&');
