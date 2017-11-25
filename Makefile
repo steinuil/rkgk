@@ -1,8 +1,8 @@
 .PHONY: dist/bundle.js
 dist/bundle.js: dist
-	yarn run browserify -- \
+	yarn run browserify \
 		--entry   src/main.tsx \
-		--outfile $(.TARGET) \
+		--outfile dist/bundle.js \
 		--plugin  tsify
 
 dist:
