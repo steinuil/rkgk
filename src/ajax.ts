@@ -1,42 +1,44 @@
+import { Failure } from './types';
+
+
 export type Method = "GET" | "POST" | "PUT" | "DELETE";
 
 
-export function request(
-  method: Method, url: string, headers?: Array<[string, string]>, data?: any
-): Promise<string> {
+export const request = (
+  method: Method,
+  url: string,
+  headers: Array<[string, string]>,
+  params: Array<[string, string]>
+): Promise<string> => {
+  const xhr  = new XMLHttpRequest(),
+        body = new URLSearchParams();
+
+  xhr.open(method, url);
+
+  for (const [name, content] of headers)
+    xhr.setRequestHeader(name, content);
+
+  for (const [name, content] of params)
+    body.append(name, content);
+
   return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open(method, url);
-
-    let params: any;
-
-    if (data instanceof Array && data.length > 0) {
-      params = data.map(([name, content]) =>
-        encodeURIComponent(name) + '=' + encodeURIComponent(content)
-      ).join('&');
-    }
-
-    if (headers) {
-      for (const [name, content] of headers) {
-        xhr.setRequestHeader(name, content);
-      }
-    }
-
-    xhr.addEventListener('load', e => {
-      const target = e.target as XMLHttpRequest;
+    xhr.addEventListener("load", ev => {
+      const target = ev.target as XMLHttpRequest;
       const { status, responseText } = target;
       if (status >= 200 && status < 300)
         resolve(responseText);
       else
-        reject(responseText);
+        reject({ kind: "server", msg: responseText });
     });
 
-    xhr.addEventListener('error', e => {
-      const target = e.target as XMLHttpRequest;
-      const { responseText } = target;
-      reject(responseText);
+    xhr.addEventListener("error", err => {
+      reject({ kind: "network", msg: "Couldn't connect to the server" });
     });
 
-    xhr.send(params);
+    if (!navigator.onLine) {
+      reject({ kind: "network", msg: "You are offline" });
+    } else {
+      xhr.send(body);
+    }
   });
-}
+};
