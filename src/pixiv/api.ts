@@ -1,79 +1,7 @@
 import * as Ajax from "./ajax";
-import * as raw from "./rawApiTypes";
-import { MyInfo, Paged, Work, Illust } from "./types";
-
-
-const makeRequest = async <T,E>(
-  method: "GET" | "POST",
-  url: string,
-  headers: Array<[string,string]>,
-  params: Array<[string,string]>,
-  getError: (error: E) => string
-) => {
-  if (method === "POST")
-    headers.push(["Content-Type", "application/x-www-form-urlencoded"]);
-
-  const req = Ajax.request(method, url, headers, params);
-
-  let response: string;
-  try {
-    response = await req;
-  } catch (error) {
-    try {
-      if (error.kind === "server") {
-        const json: E = JSON.parse(error.msg);
-        error = getError(json);
-      }
-      throw error;
-    } catch (_) {
-      throw { kind: "parse", msg: "Failed to parse the error message" };
-    }
-  }
-
-  try {
-    const json: T = JSON.parse(response);
-    return json;
-  } catch (_) {
-    throw { kind: "parse", msg: "Failed to parse the server's response" };
-  }
-};
-
-
-// Make a POST request to the OAuth2 endpoint.
-const authRequest = async (params: Array<[string,string]>): Promise<raw.Login> => {
-  const authUrl = "https://oauth.secure.pixiv.net/auth/token";
-  const baseParams: Array<[string,string]> = [
-    ["get_secure_url", "true"],
-    ["client_id", "MOBrBDS8blbauoSck0ZfDbtuzpyT"],
-    ["client_secret", "lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj"]
-  ];
-
-  try {
-    return await makeRequest<raw.Login, raw.AuthError>(
-      "POST", authUrl, [
-        ["Content-Type", "application/x-www-form-urlencoded"]
-      ], baseParams.concat(params),
-      (err) => err.errors.system.message
-    );
-  } catch (error) {
-    if (error.kind === "server" && error.msg.slice(0,3) === "103")
-      throw { kind: "client", msg: "Incorrect username or password" };
-    else
-      throw error;
-  }
-};
-
-
-const urlPath = (url: string | null): string | null => {
-  if (!url) return null;
-
-  try {
-    const path = new URL(url);
-    return path.pathname.slice(1) + path.hash + path.search;
-  } catch (_) {
-    return null;
-  }
-};
+import * as raw  from "./raw-types";
+import * as to   from "./converters";
+import { Paged, MyInfo, Illust } from "./types";
 
 
 export namespace Credentials {
@@ -97,6 +25,7 @@ export namespace Credentials {
     expires: Date;
   }
 }
+
 
 
 export namespace Params {
@@ -130,6 +59,7 @@ export namespace Params {
 
   export type SortMode = "date_asc" | "date_desc";
 }
+
 
 
 export class API {
@@ -183,49 +113,6 @@ export class API {
   }
 
 
-  private apiRequest = async <T>(
-    method: "GET" | "POST",
-    path: string,
-    params: Params.t
-  ): Promise<T> => {
-    const url = "https://app-api.pixiv.net/" + path;
-    const accessToken = await this.login();
-    const filteredParams: Array<[string,string]> = [];
-
-    for (const [name, content] of params)
-      if (content) filteredParams.push([name, Params.toString(content)]);
-
-    try {
-      return await makeRequest<T,raw.Error>(method, url, [
-          ["Authorization", `Bearer ${accessToken}`]
-        ], filteredParams, (err) => err.error.user_message);
-    } catch (error) {
-      if (error.kind === "server" && error.msg.slice(-13) === "invalid_grant") {
-        // Forcefully invalidate the token and retry the request
-        await this.login(true);
-        return await this.apiRequest<T>(method, path, filteredParams);
-      } else {
-        throw error;
-      }
-    }
-  };
-
-
-  // Produce a thunk returning a Promise to the next page.
-  // The resulting thunk hould be returned in a tuple along with the current
-  // page, so as not to needlessly expose implementation details.
-  private nextPage = <T, U>(
-    url: string | null,
-    unpack: (response: U) => T
-  ): (() => Promise<T>) | null => {
-    const path = urlPath(url);
-    if (!path) return null;
-
-    return async () =>
-      unpack(await this.apiRequest<U>("GET", path, []));
-  };
-
-
   // Log in if you're not already, and return the access token.
   // Takes an optional argument to force logging in again,
   // even if the access token hasn't expired yet.
@@ -268,6 +155,50 @@ export class API {
     };
 
     return r.response.access_token;
+  };
+
+
+  private apiRequest = async <T>(
+    method: Ajax.Method,
+    path: string,
+    params: Params.t
+  ): Promise<T> => {
+    const url = "https://app-api.pixiv.net/" + path;
+    const accessToken = await this.login();
+    const filteredParams: Array<[string,string]> = [];
+
+    // Filter out undefined params and turn the rest into strings
+    for (const [name, content] of params)
+      if (content) filteredParams.push([name, Params.toString(content)]);
+
+    try {
+      return await Ajax.request<T,raw.Error>(method, url, [
+          ["Authorization", `Bearer ${accessToken}`]
+        ], filteredParams, (err) => err.error.user_message);
+    } catch (error) {
+      if (error.kind === "server" && error.msg.slice(-13) === "invalid_grant") {
+        // Forcefully invalidate the token and retry the request
+        await this.login(true);
+        return await this.apiRequest<T>(method, path, filteredParams);
+      } else {
+        throw error;
+      }
+    }
+  };
+
+
+  // Produce a thunk returning a Promise to the next page.
+  // The resulting thunk hould be returned in a tuple along with the current
+  // page, so as not to needlessly expose implementation details.
+  private nextPage = <T, U>(
+    url: string | null,
+    unpack: (response: U) => T
+  ): (() => Promise<T>) | null => {
+    const path = urlPath(url);
+    if (!path) return null;
+
+    return async () =>
+      unpack(await this.apiRequest<U>("GET", path, []));
   };
 
 
@@ -368,51 +299,38 @@ export class API {
 }
 
 
+// Make a POST request to the OAuth2 endpoint.
+const authRequest = async (params: Array<[string,string]>): Promise<raw.Login> => {
+  const authUrl = "https://oauth.secure.pixiv.net/auth/token";
+  const baseParams: Array<[string,string]> = [
+    ["get_secure_url", "true"],
+    ["client_id", "MOBrBDS8blbauoSck0ZfDbtuzpyT"],
+    ["client_secret", "lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj"]
+  ];
 
-namespace to {
-  export const MyInfo = (r: raw.Login): MyInfo => {
-    const user = r.response.user;
-    return {
-      name: user.account,
-      nick: user.name,
-      id: parseInt(user.id),
-      email: user.main_address,
-      avatar: {
-        big: user.profile_image_urls.px_170x170,
-        medium: user.profile_image_urls.px_50x50,
-        small: user.profile_image_urls.px_16x16
-      }
-    };
-  };
+  try {
+    return await Ajax.request<raw.Login, raw.AuthError>(
+      "POST", authUrl, [
+        ["Content-Type", "application/x-www-form-urlencoded"]
+      ], baseParams.concat(params),
+      (err) => err.errors.system.message
+    );
+  } catch (error) {
+    if (error.kind === "server" && error.msg.slice(0,3) === "103")
+      throw { kind: "client", msg: "Incorrect username or password" };
+    else
+      throw error;
+  }
+};
 
-  export const Work = (w: raw.Work): Work => {
-    return {
-      id: w.id,
-      title: w.title,
-      caption: w.caption,
-      date: new Date(w.create_date),
-      userId: w.user.id,
-      pages: w.page_count,
-      tags: w.tags.map(x => x.name),
-      thumbnail: w.image_urls.square_medium,
-      bookmarked: w.is_bookmarked
-    };
-  };
 
-  export const Illust = (i: raw.Illust): Illust => {
-    let illust: Illust = to.Work(i) as Illust;
-    illust.tools = i.tools;
-    illust.dimensions = [i.width, i.height];
-    illust.type = i.type;
+const urlPath = (url: string | null): string | null => {
+  if (!url) return null;
 
-    if (i.meta_single_page) {
-      illust.images = [i.meta_single_page.original_image_url];
-    } else if (i.meta_pages) {
-      illust.images = i.meta_pages.map(x => x.original);
-    }
-
-    illust.sexualContent = i.sanity_level / 2;
-
-    return illust;
-  };
-}
+  try {
+    const path = new URL(url);
+    return path.pathname.slice(1) + path.hash + path.search;
+  } catch (_) {
+    return null;
+  }
+};

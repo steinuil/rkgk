@@ -4,7 +4,6 @@ export interface Failure {
   msg: string;
 }
 
-
 // Recursive type for paged resources.
 // Contains the resource and a Promise to the next page, if any.
 export type Paged<T> = [ T, (() => Promise<Paged<T>>) | null ];
@@ -32,7 +31,7 @@ export interface Work {
   pages: number;
   tags: Array<string>;
   thumbnail: string;
-  /*bookmarks: number | null;
+/*bookmarks: number | null;
   views: number | null;
   commentCount: number | null;*/
   bookmarked: boolean;
@@ -55,4 +54,3 @@ export interface Illust extends Work {
   dimensions: [number, number];
   sexualContent: SexualContent;
 }
-

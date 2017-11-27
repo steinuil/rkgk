@@ -78,9 +78,9 @@ export interface Work {
 
 export type Illust = SingleIllust | MultiIllust;
 
-enum SexualContent { SafeForWork = 2, Sexual = 4, Grotesque = 6 }
+export enum SexualContent { SafeForWork = 2, Sexual = 4, Grotesque = 6 }
 
-interface BaseIllust extends Work {
+export interface BaseIllust extends Work {
   type: "illust" | "manga" | "ugoira";
   tools: Array<string>;
   width: number;
@@ -90,12 +90,12 @@ interface BaseIllust extends Work {
 
 // To make Illust type-safe we consider illusts with only one page
 // and illusts with multiple as different types.
-interface SingleIllust extends BaseIllust {
+export interface SingleIllust extends BaseIllust {
   meta_single_page: { original_image_url: string; };
   meta_pages: null;
 }
 
-interface MultiIllust extends BaseIllust {
+export interface MultiIllust extends BaseIllust {
   meta_single_page: null;
   meta_pages: Array<{
     square_medium: string;
@@ -115,14 +115,14 @@ export interface Novel extends Work {
 }
 
 
-type url = string;
-type maybeString = "" | string;
-type maybeNumber = 0 | number;
-type date = string;
+export type url = string;
+export type maybeString = "" | string;
+export type maybeNumber = 0 | number;
+export type date = string;
 export type publicity = "public" | "private";
 
 
-interface User {
+export interface User {
   id: number;
   name: string;
   account: string;
@@ -132,7 +132,7 @@ interface User {
 }
 
 
-interface UserDetail {
+export interface UserDetail {
   user: User;
 
   profile: {
@@ -194,7 +194,7 @@ interface UserDetail {
 }
 
 
-interface Comment {
+export interface Comment {
   id: number;
   comment: string;
   date: date;
@@ -202,14 +202,14 @@ interface Comment {
 }
 
 
-interface CommentList {
+export interface CommentList {
   total_comments?: number;
   next_url: url | null;
   comments: Array<Comment>;
 }
 
 
-interface UgoiraDetail {
+export interface UgoiraDetail {
   ugoira_metadata: {
     zip_urls: { medium: url; }
     frames: Array<{
@@ -220,7 +220,7 @@ interface UgoiraDetail {
 }
 
 
-interface TrendingTags {
+export interface TrendingTags {
   trend_tags: Array<{
     tag: string;
     illust: Illust;
@@ -228,7 +228,7 @@ interface TrendingTags {
 }
 
 
-interface Paged {
+export interface Paged {
   next_url: url | null;
 }
 
@@ -238,12 +238,12 @@ export interface IllustList extends Paged {
 }
 
 
-interface IllustDetail {
+export interface IllustDetail {
   illust: Illust;
 }
 
 
-interface UserPreviews extends Paged {
+export interface UserPreviews extends Paged {
   user_previews: Array<{
     user: User;
     illusts: Array<Illust>;
@@ -253,7 +253,7 @@ interface UserPreviews extends Paged {
 }
 
 
-interface TrendingTags {
+export interface TrendingTags {
   trend_tags: Array<{
     tag: string;
     illust: Illust;
