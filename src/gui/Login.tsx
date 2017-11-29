@@ -19,22 +19,28 @@ type Inputs = {
 }
 
 
-export class Form extends React.Component<FormProps, FormState> {
-  state = { username: "", password: "" };
+export default class Form extends React.Component<FormProps, FormState> {
   private inputs: Inputs;
 
   constructor(props: FormProps) {
     super(props);
 
-    if (props.initialUsername)
-      this.state.username = props.initialUsername;
+    this.state = {
+      username: props.initialUsername || "",
+      password: ""
+    };
+
+    this.inputs = {
+      username: undefined,
+      password: undefined
+    };
   }
 
   private update = (ev: React.FormEvent<HTMLInputElement>) => {
     const target = ev.target as HTMLInputElement;
     // Have to do it this way or the type checker will yell at us
     this.setState((state, _) => {
-      if (target.name === "username" || target.name === "password")
+      if (target.name in this.inputs)
         return { [target.name]: target.value };
     });
   };
