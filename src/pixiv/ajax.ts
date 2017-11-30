@@ -14,7 +14,7 @@ export const request = <T,E>(
   for (const [name, content] of params)
     body.append(name, content);
 
-  if (method === "GET")
+  if (method === "GET" && body.toString().length > 0)
     url += "?" + body.toString()
 
   xhr.open(method, "http://localhost:9292/" + encodeURI(url));
