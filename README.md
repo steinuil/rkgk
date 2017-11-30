@@ -2,6 +2,9 @@
 A Pixiv browser.
 
 
+![rkgk in action](screenshot.png)
+
+
 ## Compiling and running
 Compiling requires either npm or yarn, and `make`.
 
