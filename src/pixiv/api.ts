@@ -174,7 +174,7 @@ export class API {
     try {
       return await Ajax.request<T,raw.Error>(method, url, [
           ["Authorization", `Bearer ${accessToken}`]
-        ], filteredParams, (err) => err.error.user_message);
+        ], filteredParams, (err) => err.error.user_message || err.error.message);
     } catch (error) {
       if (error.kind === "server" && error.msg.slice(-13) === "invalid_grant") {
         // Forcefully invalidate the token and retry the request

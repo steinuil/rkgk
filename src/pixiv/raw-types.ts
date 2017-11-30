@@ -90,19 +90,26 @@ export interface BaseIllust extends Work {
 
 // To make Illust type-safe we consider illusts with only one page
 // and illusts with multiple as different types.
+// (this didn't even work LOL)
 export interface SingleIllust extends BaseIllust {
   meta_single_page: { original_image_url: string; };
   meta_pages: null;
 }
 
-export interface MultiIllust extends BaseIllust {
-  meta_single_page: null;
-  meta_pages: Array<{
+
+export interface MultiIllustUrls {
+  image_urls: {
     square_medium: string;
     medium: string;
     large: string;
     original: string;
-  }>;
+  };
+}
+
+
+export interface MultiIllust extends BaseIllust {
+  meta_single_page: { original_image_url: undefined };
+  meta_pages: Array<MultiIllustUrls>;
 }
 
 

@@ -11,10 +11,6 @@ body {
   color: #acc12f;
 }
 
-#page-root {
-  height: 100vh;
-}
-
 .button {
   cursor: pointer;
   -moz-user-select: none;
@@ -150,28 +146,61 @@ body {
 }
 
 
-#browser-root {
-  padding: 3px;
+
+/* MAIN PART */
+main {
+  display: flex;
+  align-items: stretch;
+  height: 100vh;
 }
 
-#browser-root nav {
+section#list {
+  flex: 1;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  overflow-y: auto;
+}
+
+section#detail {
+  max-height: 100%;
+  margin: auto 0;
+  flex: 1.5;
+  overflow-y: auto;
+}
+
+section#detail #images {
+  display: flex;
+  flex-flow: column nowrap;
   justify-content: center;
 }
 
-#browser-root main {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: center;
-  position: relative;
+section#detail #images>img {
+  margin: auto;
+  height: auto;
+  max-width: 100%;
 }
+
 
 .thumbnail {
   position: relative;
-  width: 360px;
-  height: 360px;
+  width: 180px;
+  height: 180px;
   display: block;
   margin: 3px;
+  overflow-y: hidden;
+}
+
+@media (max-width: 1399px) {
+  .thumbnail {
+    width: 150px;
+    height: 150px;
+  }
+}
+
+.thumbnail>img {
+  max-width: 100%;
+  height: auto;
 }
 
 .thumbnail .bookmark {

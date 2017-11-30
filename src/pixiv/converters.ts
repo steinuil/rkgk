@@ -37,10 +37,11 @@ export const Illust = (i: raw.Illust): t.Illust => {
   illust.dimensions = [i.width, i.height];
   illust.type = i.type;
 
-  if (i.meta_single_page) {
+  if (i.meta_single_page.original_image_url) {
     illust.images = [i.meta_single_page.original_image_url];
-  } else if (i.meta_pages) {
-    illust.images = i.meta_pages.map(x => x.original);
+  } else {
+    const multiUrls = i.meta_pages as Array<raw.MultiIllustUrls>;
+    illust.images = multiUrls.map(x => x.image_urls.original);
   }
 
   illust.sexualContent = i.sanity_level / 2;

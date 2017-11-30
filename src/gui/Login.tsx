@@ -3,7 +3,7 @@ import * as React from "react";
 
 export interface FormProps {
   onSubmit: (username: string, password: string) => void;
-  notify: (msg: string) => void;
+  notify: (msg: any) => void;
   initialUsername?: string;
 }
 

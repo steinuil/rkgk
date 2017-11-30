@@ -11,16 +11,19 @@ export const request = <T,E>(
   const xhr  = new XMLHttpRequest(),
         body = new URLSearchParams();
 
-  xhr.open(method, url);
+  for (const [name, content] of params)
+    body.append(name, content);
+
+  if (method === "GET")
+    url += "?" + body.toString()
+
+  xhr.open(method, "http://localhost:9292/" + encodeURI(url));
 
   if (method === "POST")
     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
   for (const [name, content] of headers)
     xhr.setRequestHeader(name, content);
-
-  for (const [name, content] of params)
-    body.append(name, content);
 
   return new Promise((resolve, reject) => {
     xhr.addEventListener("load", ev => {
