@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as Pixiv from "../pixiv/api";
-import Thumbnail from "./Thumbnail";
 import { Illust, Paged } from "../pixiv/types";
+import Thumbnail from "./Thumbnail";
 
 
 export interface Props {
@@ -46,29 +46,70 @@ export default class Browser extends React.Component<Props, State> {
   };
 
 
-  render() {
-    const list = this.state.list;
-    const main = list
-      ? list.illusts.map(w =>
-          <Thumbnail key={w.id} work={w} notify={(msg) => this.props.notify(msg)}
-            onClick={(id) => this.viewDetail(id)} />
-          )
-      : null;
-
+  private Detail = () => {
     const work = this.state.detail;
-    const detail = work
-      ? <section id="detail">
-          <div id="images">{work.images.map(url => <img key={url} src={"http://localhost:9292/" + url} />)}</div>
-          <div>https://pixiv.net/member_illust.php?mode=medium&illust_id={work.id}</div>
-          <div>{work.title}</div>
-        </section>
-      : <section id="detail"></section>;
+    if (!work)
+      return <section id="detail">click on an illustration to start</section>;
 
+    const images = work.images.map((url) =>
+      <img key={url} src={"http://localhost:9292/" + url}/>
+    );
+
+    return <section id="detail">
+      <div id="images">{images}</div>
+      <div>https://pixiv.net/member_illust.php?mode=medium&illust_id={work.id}</div>
+      <div>{work.title}</div>
+    </section>;
+  };
+
+
+  private loadNextPage = async () => {
+    const list = this.state.list;
+    if (!list) return;
+    if (!list.nextPage) return;
+
+    try {
+      const [illusts, nextPage] = await list.nextPage();
+      this.setState({
+        list: {
+          title: list.title,
+          illusts: list.illusts.concat(illusts),
+          nextPage
+        }
+      });
+    } catch (err) {
+      this.props.notify(err);
+    }
+  };
+
+
+  private List = () => {
+    const list = this.state.list;
+    if (!list)
+      return <section id="list">loading...</section>;
+
+    const thumbs = list.illusts.map((work) =>
+      <Thumbnail key={work.id} work={work}
+        onClick={(id) => this.viewDetail(id)}
+        notify={(msg) => this.props.notify(msg)} />
+    );
+
+    return <section id="list">
+      <nav>
+        <div>{list.title}</div>
+      </nav>
+      <article>
+        <div id="illust-list">{thumbs}</div>
+        {list.nextPage && <a className=" button next-page" onClick={() => this.loadNextPage()}>Load more</a>}
+      </article>
+    </section>;
+  };
+
+
+  render() {
     return <main>
-      <section id="list">
-        {main}
-      </section>
-      {detail}
+      {this.List()}
+      {this.Detail()}
     </main>;
   }
 }
