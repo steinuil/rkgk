@@ -209,6 +209,36 @@ section#detail #images>img {
   max-width: 100%;
 }
 
+section#detail footer>header {
+  display: flex;
+  flex-flow: row nowrap;
+  padding: 12px;
+}
+
+section#detail footer>header .avatar-container {
+  margin-right: 8px;
+}
+
+section#detail footer>header img {
+  width: 52px;
+  height: auto;
+}
+
+section#detail footer>header .username {
+  display: inline-block;
+  color: white;
+  font-weight: bold;
+}
+
+section#detail footer>header .atname {
+  font-weight: normal;
+  font-size: .8em;
+}
+
+section#detail footer>header .title {
+  font-size: 1.5em;
+}
+
 
 .thumbnail {
   position: relative;
@@ -217,6 +247,10 @@ section#detail #images>img {
   display: block;
   margin: 3px;
   overflow-y: hidden;
+}
+
+.thumbnail>img:active {
+  filter: brightness(.8);
 }
 
 @media (max-width: 1430px) {
@@ -239,6 +273,10 @@ section#detail #images>img {
   height: 1.5em;
   fill-opacity: .7;
   stroke-width: 4px;
+}
+
+.thumbnail .bookmark:active {
+  filter: brightness(1.2);
 }
 
 .bookmark {

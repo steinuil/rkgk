@@ -20,7 +20,7 @@ export interface State {
 
 // The page is a timestamp (provided with performance.now()) that
 // changes every time the current page is updated, so that "next page"
-// requests know when now to append their output.
+// requests know when now to append its output.
 export interface ListState extends Page { page: number; }
 
 export interface Page {
@@ -193,8 +193,29 @@ export default class Browser extends React.Component<Props, State> {
 
     return <section id="detail">
       <div id="images">{images}</div>
-      <div>https://pixiv.net/member_illust.php?mode=medium&illust_id={illust.id}</div>
-      <div>{illust.title}</div>
+      <footer>
+        <header>
+          <a className="avatar-container">
+            <img src={"http://localhost:9292/" + illust.user.avatar} />
+          </a>
+          <div>
+            <div>
+              <span className="username">
+                {illust.user.displayName} <span className="atname">@{illust.user.accountName}</span>
+              </span>
+              <span className="date">
+                {illust.date.toDateString()}
+              </span>
+            </div>
+            <div className="title">{illust.title}</div>
+          </div>
+        </header>
+        <article>
+          <div>{illust.caption}</div>
+          <div>{illust.tags}</div>
+          <div><a href={"https://pixiv.net/member_illust.php?mode=medium&illust_id=" + illust.id}>share</a></div>
+        </article>
+      </footer>
     </section>;
   };
 

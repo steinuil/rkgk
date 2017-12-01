@@ -17,13 +17,25 @@ export const MyInfo = (r: raw.Login): t.MyInfo => {
   };
 };
 
+export const User = (u: raw.User): t.User => {
+  return {
+    id: u.id,
+    accountName: u.account,
+    displayName: u.name,
+    avatar: u.profile_image_urls.medium,
+    description: u.comment || null,
+    followed: u.is_followed || null
+  };
+};
+
 export const Work = (w: raw.Work): t.Work => {
   return {
     id: w.id,
     title: w.title,
     caption: w.caption,
     date: new Date(w.create_date),
-    userId: w.user.id,
+    user: User(w.user),
+    //userId: w.user.id,
     pages: w.page_count,
     tags: w.tags.map(x => x.name),
     thumbnail: w.image_urls.square_medium,

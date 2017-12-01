@@ -30,7 +30,8 @@ export interface Work {
   title: string;
   caption: string;
   date: Date;
-  userId: number;
+  user: User;
+  //userId: number;
   pages: number;
   tags: Array<string>;
   thumbnail: string;
@@ -56,4 +57,14 @@ export interface Illust extends Work {
   images: Array<string>;
   dimensions: [number, number];
   sexualContent: SexualContent;
+}
+
+
+export interface User {
+  id: number;
+  accountName: string;
+  displayName: string;
+  avatar: string;
+  description: string | null;
+  followed: boolean | null;
 }
