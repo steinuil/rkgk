@@ -1,4 +1,5 @@
 import * as React from "react";
+import deepmerge = require("deepmerge");
 import * as Pixiv from "../pixiv/api";
 import { NextPage, Illust } from "../pixiv/types";
 import Thumbnail from "./Thumbnail";
@@ -106,6 +107,45 @@ export default class Browser extends React.Component<Props, State> {
   };
 
 
+  private toggleBookmark = async (id: number) => {
+    const illust = this.state.illustCache[id];
+    if (!illust) return;
+
+    const state = illust.bookmarked;
+    this.setState((prev) => {
+      if (!prev.illustCache[id]) return;
+      return {
+        illustCache: deepmerge(prev.illustCache, {
+          [id]: { bookmarked: !state }
+        })
+      };
+    });
+
+    try {
+      await (state ? this.props.api.unbookmark : this.props.api.bookmark)(id);
+      this.setState((prev) => {
+        if (!prev.illustCache[illust.id]) return;
+        return {
+          illustCache: deepmerge(prev.illustCache, {
+            [id]: { bookmarked: !state }
+          })
+        };
+      });
+    } catch(err) {
+      this.setState((prev) => {
+        if (!prev.illustCache[illust.id]) return;
+        return {
+          illustCache: deepmerge(prev.illustCache, {
+            [id]: { bookmarked: state }
+          })
+        };
+      });
+      // revert back to prev state
+      this.props.notify(err);
+    }
+  };
+
+
   private List = () => {
     const list = this.state.list;
 
@@ -121,6 +161,7 @@ export default class Browser extends React.Component<Props, State> {
     const thumbs = illusts.map((work) =>
       <Thumbnail key={work.id} work={work}
         onClick={(detail) => this.setState({ detail })}
+        toggleBookmark={(id) => this.toggleBookmark(id)}
         notify={(msg) => this.props.notify(msg)} />
     );
 

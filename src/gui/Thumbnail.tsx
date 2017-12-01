@@ -7,8 +7,7 @@ export interface Props {
   work:    Work;
   notify:  (msg: any) => void;
   onClick: (id: number) => void;
-  //bookmark: (id: number) => void;
-  //unbookmark: (id: number) => void;
+  toggleBookmark: (id: number) => void;
 }
 
 
@@ -18,7 +17,7 @@ export default (props: Props) => {
   return <a className="thumbnail link button illust">
     <img src={"http://localhost:9292/" + props.work.thumbnail}
       onClick={() => props.onClick(props.work.id)} />
-    <Heart className="bookmark" onClick={() => console.log()}
+    <Heart className="bookmark" onClick={() => props.toggleBookmark(props.work.id)}
       color={props.work.bookmarked ? "#acc12f" : "white"} />
     {props.work.pages > 1 ? count : null}
   </a>;
