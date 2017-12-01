@@ -11,10 +11,19 @@ body {
   color: #acc12f;
 }
 
-.button {
+.button, .clickable {
   cursor: pointer;
   -moz-user-select: none;
   user-select: none;
+}
+
+.button {
+  padding: .4em .8em;
+}
+
+.button:active {
+  filter: opacity(.8);
+  transform: translateX(2px) translateY(2px);
 }
 
 
@@ -189,6 +198,12 @@ section#list #illust-list {
   margin: auto;
 }
 
+.next-page {
+  display: inline-block;
+  margin: 20px;
+  background-color: #1e2019;
+}
+
 
 section#detail {
   height: 100%;
@@ -209,35 +224,74 @@ section#detail #images>img {
   max-width: 100%;
 }
 
-section#detail footer>header {
+section#detail .info-panel {
+  padding: 8px;
+}
+
+section#detail .info-panel>header {
   display: flex;
   flex-flow: row nowrap;
-  padding: 12px;
+  margin: 4px;
 }
 
-section#detail footer>header .avatar-container {
+section#detail .info-panel>header .avatar-container {
   margin-right: 8px;
-}
-
-section#detail footer>header img {
   width: 52px;
-  height: auto;
+  height: 52px;
+  text-align: center;
 }
 
-section#detail footer>header .username {
+section#detail .info-panel>header img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+section#detail .info-panel>header>.info-container {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+section#detail .info-panel>header .username {
   display: inline-block;
   color: white;
   font-weight: bold;
 }
 
-section#detail footer>header .atname {
+section#detail .info-panel>header .atname {
   font-weight: normal;
   font-size: .8em;
 }
 
-section#detail footer>header .title {
-  font-size: 1.5em;
+section#detail .info-panel>header .date {
+  font-size: .8em;
 }
+
+section#detail .info-panel>header .title {
+  font-size: 1.5em;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+section#detail .info-panel>article {
+  padding: 2px;
+}
+
+section#detail .info-panel>article>* {
+  margin: 2px;
+}
+
+
+section#detail .info-panel>article .tags {
+  margin: 0;
+}
+
+section#detail .info-panel>article .tag {
+  margin: 2px;
+  padding: 2px 8px;
+  background-color: #45425a;
+  display: inline-block;
+}
+
 
 
 .thumbnail {
@@ -247,6 +301,7 @@ section#detail footer>header .title {
   display: block;
   margin: 3px;
   overflow-y: hidden;
+  background-color: #1e2019;
 }
 
 .thumbnail>img:active {

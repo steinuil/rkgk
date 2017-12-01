@@ -14,7 +14,7 @@ export interface Props {
 export default (props: Props) => {
   const count = <div className="pages">{props.work.pages}</div>;
 
-  return <a className="thumbnail link button illust">
+  return <a className="thumbnail clickable illust">
     <img src={"http://localhost:9292/" + props.work.thumbnail}
       onClick={() => props.onClick(props.work.id)} />
     <Heart className="bookmark" onClick={() => props.toggleBookmark(props.work.id)}

@@ -87,7 +87,7 @@ export default class Browser extends React.Component<Props, State> {
 
     try {
       const [illusts, nextPage] = await list.nextPage();
-      const ids = list.illusts.concat(this.cacheIllusts(illusts));
+      const ids = [...new Set(list.illusts.concat(this.cacheIllusts(illusts)))];
 
       this.setState((prev) => {
         const list = prev.list;
@@ -140,7 +140,6 @@ export default class Browser extends React.Component<Props, State> {
           })
         };
       });
-      // revert back to prev state
       this.props.notify(err);
     }
   };
@@ -193,27 +192,30 @@ export default class Browser extends React.Component<Props, State> {
 
     return <section id="detail">
       <div id="images">{images}</div>
-      <footer>
+      <footer className="info-panel">
         <header>
           <a className="avatar-container">
             <img src={"http://localhost:9292/" + illust.user.avatar} />
           </a>
-          <div>
+          <div className="info-container">
             <div>
               <span className="username">
                 {illust.user.displayName} <span className="atname">@{illust.user.accountName}</span>
               </span>
-              <span className="date">
-                {illust.date.toDateString()}
-              </span>
+              {" "}
+              <span className="date">{illust.date.toDateString()}</span>
             </div>
-            <div className="title">{illust.title}</div>
+            <div title={illust.title} className="title">{illust.title}</div>
           </div>
         </header>
         <article>
-          <div>{illust.caption}</div>
-          <div>{illust.tags}</div>
-          <div><a href={"https://pixiv.net/member_illust.php?mode=medium&illust_id=" + illust.id}>share</a></div>
+          <div className="description" dangerouslySetInnerHTML={{__html: illust.caption}}/>
+          <div className="tags">
+            {illust.tags.map((tag) => <span key={tag} className="tag">{tag}</span>)}
+          </div>
+          <div>
+            <a href={"https://pixiv.net/member_illust.php?mode=medium&illust_id=" + illust.id}>share link</a>
+          </div>
         </article>
       </footer>
     </section>;
