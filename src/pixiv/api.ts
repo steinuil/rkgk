@@ -120,7 +120,7 @@ export class API {
     const c = this.creds;
     let request;
 
-    if (c.state === "logged" && !force && c.expires < new Date()) {
+    if (c.state === "logged" && !force && c.expires > new Date()) {
       return c.accessToken;
 
     } else if (c.state === "token" || c.state === "logged") {
