@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as Pixiv from "../pixiv/api";
-import { Illust, Paged } from "../pixiv/types";
+import { NextPage, Illust } from "../pixiv/types";
 import Thumbnail from "./Thumbnail";
 
 
@@ -10,18 +10,34 @@ export interface Props {
 }
 
 
+/*
+export interface State {
+
+}
+
+
+export interface ListState {
+  id: number;
+  title: string;
+  illusts: Array<Illust>;
+  nextPage: NextPage<Array<Illust>>;
+}
+*/
+
+
+// The ID should 
 export interface State {
   detail: Illust | null;
-  list?: {
-    illusts: Array<Illust>;
+  list: null | {
     title: string;
-    nextPage: (() => Promise<Paged<Array<Illust>>>) | null;
+    illusts: Array<Illust>;
+    nextPage: NextPage<Array<Illust>> | null;
   };
 }
 
 
 export default class Browser extends React.Component<Props, State> {
-  state: State = { detail: null };
+  state: State = { detail: null, list: null };
 
   componentDidMount() {
     this.props.api.feed().then(

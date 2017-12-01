@@ -192,7 +192,6 @@ section#list #illust-list {
 
 section#detail {
   height: 100%;
-  margin: auto 0;
   flex: 1.5;
   overflow-y: auto;
   background-color: #1e2019;

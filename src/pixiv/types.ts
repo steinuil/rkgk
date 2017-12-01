@@ -4,9 +4,12 @@ export interface Failure {
   msg: string;
 }
 
-// Recursive type for paged resources.
+// Recursive types for paged resources.
 // Contains the resource and a Promise to the next page, if any.
 export type Paged<T> = [ T, (() => Promise<Paged<T>>) | null ];
+
+
+export type NextPage<T> = () => Promise<Paged<T>>;
 
 
 export interface MyInfo {
