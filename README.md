@@ -5,7 +5,7 @@ A typed Pixiv browser.
 
 
 ## Compiling and running
-As this project is not really done yet, this is a bit cumbersome.
+As this project is not really done yet, this is a bit cumbersome. In the future, a handy precompiled binary will be provided instead.
 Compiling requires either npm or yarn, and `make`.
 
 ```

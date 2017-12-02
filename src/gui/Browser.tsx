@@ -3,6 +3,7 @@ import deepmerge = require("deepmerge");
 import * as Pixiv from "../pixiv/api";
 import { NextPage, Illust } from "../pixiv/types";
 import Thumbnail from "./Thumbnail";
+import NavBar from "./NavBar";
 
 
 export interface Props {
@@ -170,7 +171,9 @@ export default class Browser extends React.Component<Props, State> {
       </a>;
 
     return <section id="list">
-      <nav><div>{list.title}</div></nav>
+      <NavBar title={list.title} onSubmit={(x) => console.log(x)}
+        autoComplete={(q) => this.props.api.autoComplete(q)}
+        notify={(msg) => this.props.notify(msg)}/>
       <article>
         <div id="illust-list">{thumbs}</div>
         {nextPage}

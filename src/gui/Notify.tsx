@@ -17,7 +17,7 @@ const Toast = (props: ToastProps) =>
   <div className="notification">
     <p>{props.notif.message}</p>
     <svg xmlns="http://www.w3.org/2000/svg"
-        className="button cross" viewBox="0 0 50 50"
+        className="clickable cross" viewBox="0 0 50 50"
         onClick={_ => props.onClick(props.notif.id)} >
       <line x1="5" y1="5" x2="45" y2="45" />
       <line x1="45" y="5" x2="5" y2="45" />
