@@ -1,6 +1,7 @@
 import * as React from "react";
 import Heart from "./Heart";
 import { Work } from "../pixiv/types";
+import * as Proxy from "../proxy";
 
 
 export interface Props {
@@ -15,7 +16,7 @@ export default (props: Props) => {
   const count = <div className="pages">{props.work.pages}</div>;
 
   return <a className="thumbnail clickable illust">
-    <img src={"http://localhost:9292/" + props.work.thumbnail}
+    <img src={Proxy.img(props.work.thumbnail)}
       onClick={() => props.onClick(props.work.id)} />
     <Heart className="bookmark" onClick={() => props.toggleBookmark(props.work.id)}
       color={props.work.bookmarked ? "#acc12f" : "white"} />

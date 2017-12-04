@@ -4,6 +4,7 @@ import * as Pixiv from "../pixiv/api";
 import { NextPage, Illust } from "../pixiv/types";
 import Thumbnail from "./Thumbnail";
 import NavBar from "./NavBar";
+import * as Proxy from "../proxy";
 
 
 export interface Props {
@@ -190,7 +191,7 @@ export default class Browser extends React.Component<Props, State> {
       return <section id="detail" />;
 
     const images = illust.images.map((url) =>
-      <img key={url} src={"http://localhost:9292/" + url}/>
+      <img key={url} src={Proxy.img(url)}/>
     );
 
     return <section id="detail">
@@ -198,7 +199,7 @@ export default class Browser extends React.Component<Props, State> {
       <footer className="info-panel">
         <header>
           <a className="avatar-container">
-            <img src={"http://localhost:9292/" + illust.user.avatar} />
+            <img src={Proxy.img(illust.user.avatar)} />
           </a>
           <div className="info-container">
             <div>
