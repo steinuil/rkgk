@@ -2,6 +2,7 @@ import * as Ajax from "./ajax";
 import * as raw  from "./raw-types";
 import * as to   from "./converters";
 import { Paged, MyInfo, Illust } from "./types";
+import * as Proxy from "../proxy";
 
 
 export namespace Credentials {
@@ -163,7 +164,7 @@ export class API {
     path: string,
     params: Params.t
   ): Promise<T> => {
-    const url = "https://app-api.pixiv.net/" + path;
+    const url = Proxy.api(path);
     const accessToken = await this.login();
     const filteredParams: Array<[string,string]> = [];
 
@@ -301,7 +302,7 @@ export class API {
 
 // Make a POST request to the OAuth2 endpoint.
 const authRequest = async (params: Array<[string,string]>): Promise<raw.Login> => {
-  const authUrl = "https://oauth.secure.pixiv.net/auth/token";
+  const authUrl = Proxy.auth;
   const baseParams: Array<[string,string]> = [
     ["get_secure_url", "true"],
     ["client_id", "MOBrBDS8blbauoSck0ZfDbtuzpyT"],

@@ -17,7 +17,7 @@ export const request = <T,E>(
   if (method === "GET" && body.toString().length > 0)
     url += "?" + body.toString()
 
-  xhr.open(method, "http://localhost:9292/" + encodeURI(url));
+  xhr.open(method, url);
 
   if (method === "POST")
     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");

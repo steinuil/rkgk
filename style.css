@@ -194,7 +194,7 @@ section#list article {
 section#list #illust-list {
   display: flex;
   flex-wrap: wrap;
-  justify-content: left;
+  justify-content: center;
   margin: auto;
 }
 

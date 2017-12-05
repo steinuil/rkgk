@@ -20,9 +20,11 @@ func pixivProxy(proxyPath string, actualUrl string) http.HandlerFunc {
 				panic(err)
 			}
 
+      r.ParseForm()
+
 			data := url.Values{}
 
-			for key, v := range r.URL.Query() {
+			for key, v := range r.Form {
 				for _, val := range v {
 					data.Add(key, val)
 				}
@@ -34,7 +36,7 @@ func pixivProxy(proxyPath string, actualUrl string) http.HandlerFunc {
 				reqUrl.RawQuery = data.Encode()
 				req, _ = http.NewRequest(r.Method, reqUrl.String(), nil)
 			} else {
-				req, _ = http.NewRequest(r.Method, reqUrl.String(), strings.NewReader(data.Encode()))
+				req, err = http.NewRequest(r.Method, reqUrl.String(), strings.NewReader(data.Encode()))
 				req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			}
 
@@ -52,6 +54,8 @@ func pixivProxy(proxyPath string, actualUrl string) http.HandlerFunc {
 				panic(err)
 			}
 
+			w.WriteHeader(res.StatusCode)
+
 			defer res.Body.Close()
 			io.Copy(w, res.Body)
 		case http.MethodOptions:
@@ -67,6 +71,14 @@ func pixivProxy(proxyPath string, actualUrl string) http.HandlerFunc {
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
+	})
+
+	http.HandleFunc("/dist/bundle.js", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "dist/bundle.js")
+	})
+
+  http.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "style.css")
 	})
 
 	http.HandleFunc("/pixiv/api/", pixivProxy("api", "https://app-api.pixiv.net/"))
