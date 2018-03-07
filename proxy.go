@@ -20,7 +20,7 @@ func pixivProxy(proxyPath string, actualUrl string) http.HandlerFunc {
 				panic(err)
 			}
 
-      r.ParseForm()
+			r.ParseForm()
 
 			data := url.Values{}
 
@@ -77,7 +77,7 @@ func main() {
 		http.ServeFile(w, r, "dist/bundle.js")
 	})
 
-  http.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "style.css")
 	})
 

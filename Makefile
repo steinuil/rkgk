@@ -7,3 +7,6 @@ dist/bundle.js: dist
 
 dist:
 	mkdir dist
+
+run: dist/bundle.js
+	go build proxy.go
