@@ -1,10 +1,45 @@
 // API endpoints
 export interface API {
+  // Reset credentials to a username and password in case
+  // an InvalidCredentials error is thrown.
+  setCredentials(username: string, password: string): void;
+
   // Latest illustrations by the users you follow.
   myFeed(opts?: {
     restrict?: "public" | "private" | "all",
     offset?: number
-  }): Promise<Paged<Illust[]> | null>;
+  }): Promise<Paged<Illust[]>>;
+
+  // Latest illustrations globally.
+  globalFeed(opts?: {
+    type?: "illust" | "manga",
+    offset?: number
+  }): Promise<Paged<Illust[]>>;
+
+  // Recommendations based on an illustration.
+  relatedIllusts(
+    startId: number,
+    prev?: Array<number>
+  ): Promise<Paged<Illust[]>>;
+
+  // Search for illustrations matching a given query.
+  searchIllusts(query: string, opts?: {
+    match?: "partial_match_for_tags" | "exact_match_for_tags" | "title_and_caption",
+    within?: "within_last_day" | "within_last_week" | "within_last_month" | [Date, Date],
+    sortMode?: "date_desc" | "date_asc",
+    offset?: number
+  }): Promise<Paged<Illust[]>>;
+
+  // Tag completions for a given search query.
+  autoComplete(query: string): Promise<string[]>;
+
+  // Bookmark an illustration.
+  bookmarkIllust(id: number, opts?: {
+    restrict?: "public" | "private",
+    tags?: string[]
+  }): Promise<void>;
+
+  unbookmarkIllust(id: number): Promise<void>;
 
   /*
   // Latest illustrations by users in your MyPixiv.
@@ -12,12 +47,6 @@ export interface API {
     offset?: number
   }): Promise<Paged<Array<Illust>>>;
   */
-
-  // Latest illustrations globally.
-  globalFeed(opts?: {
-    type?: "illust" | "manga",
-    offset?: number
-  }): Promise<Paged<Illust[]> | null>;
 
   // Users that are currently livestreaming.
   live(opts?: {
@@ -30,29 +59,6 @@ export interface API {
     date?: Date,
     offset?: number
   }): Promise<Paged<Illust[]> | null>;
-
-  // Search for illustrations matching a given query.
-  search(query: string, opts?: {
-    match?: "partial_match_for_tags" | "exact_match_for_tags" | "title_and_caption",
-    within?: "within_last_day" | "within_last_week" | "within_last_month",
-    sortMode?: "date_desc" | "date_asc",
-    offset?: number
-  }): Promise<Paged<Array<Illust>>>;
-
-  // @Stub
-  recommended(opts?: {
-  }): Promise<Paged<Array<Illust>>>;
-
-  // Tag completions for a given search query.
-  autoComplete(query: string): Promise<Array<string>>;
-
-  // Bookmark an illustration.
-  bookmark(id: number, opts?: {
-    restrict?: "public" | "private",
-    tags?: Array<string>
-  }): Promise<void>;
-
-  unbookmark(id: number): Promise<void>;
 
   follow(id: number, opts: {
     restrict?: "public" | "private",
@@ -104,15 +110,21 @@ export class API {
   }
 
 
-  private apiReq = async <T,U>(endpoint: Endpoint<T,U>): Promise<U | null> => {
+  setCredentials = (username: string, password: string): void => {
+    this.creds = {
+      state: "password",
+      username, password
+    };
+  }
+
+
+  private apiReq = async <T,U>(endpoint: Endpoint<T,U>): Promise<U> => {
     const token      = await this.login(),
-          outParams  = new URLSearchParams,
           outHeaders = new Headers();
 
-    if (!token) return null;
-
-    for (const [name, content] of endpoint.params)
-      if (content) outParams.append(name, Params.toString(content));
+    const outParams = (endpoint.params instanceof URLSearchParams)
+      ? endpoint.params
+      : Params.toUrlParams(endpoint.params);
 
     outHeaders.append("Authorization", `Bearer ${token}`);
 
@@ -131,25 +143,22 @@ export class API {
           // The token is invalid or has expired; retry
           return await this.apiReq<T,U>(endpoint);
         } else {
-          console.error("Server returned error: ", err);
-          return null;
+          throw new Error("Server returned error: " + err.toString());
         }
       } catch (e) {
-        console.error("Invalid server error: ", e);
-        return null;
+        throw new Error("Couldn't parse server error: " + e.toString());
       }
     }
 
     try {
       return endpoint.unpack(await resp.json());
     } catch (e) {
-      console.error("Invalid server response", e);
-      return null;
+      throw new Error("Invalid server response" + e.toString());
     }
   }
 
 
-  private login = async (force = false): Promise<string | null> => {
+  private login = async (force = false): Promise<string> => {
     const c = this.creds;
 
     if (c.state === "logged" && !force && c.expires > new Date())
@@ -196,16 +205,13 @@ export class API {
         const e: raw.AuthError = await r.json();
         const err = e.errors.system.message;
         if (err.slice(0,3) === "103") {
-          console.error("Incorrect username or password");
-          throw Error("Incorrect username or password");
+          throw new InvalidCredentials();
         } else {
-          console.error("Server returned error on login: ", err);
+          throw new Error("Server returned error on login: " + err.toString());
         }
       } catch (e) {
-        console.error("Invalid server error: ", e);
+        throw new Error("Couldn't parse server error: " + e.toString());
       }
-
-      return null;
     }
 
     try {
@@ -224,8 +230,7 @@ export class API {
 
       return resp.response.access_token;
     } catch (e) {
-      console.error("Couldn't parse server response on login: ", e);
-      return null;
+      throw new Error("Couldn't parse server response on login: " + e.toString());
     }
   }
 
@@ -233,7 +238,7 @@ export class API {
   private nextPage = <T,U>(
     url: string | null,
     unpack: (resp: T) => U
-  ): Lazy<Promise<U | null>> | null => {
+  ): Lazy<Promise<U>> | null => {
     if (!url) return null;
     try {
       const url_ = new URL(url);
@@ -258,7 +263,7 @@ export class API {
   myFeed = (opts: {
     restrict?: "public" | "private" | "all",
     offset?: number
-  } = {}): Promise<Paged<Array<Illust>> | null> => {
+  } = {}): Promise<Paged<Array<Illust>>> => {
     const unpack = (resp: raw.IllustList): Paged<Array<Illust>> => [
       resp.illusts.map(i => to.Illust(i)),
       this.nextPage(resp.next_url, unpack)
@@ -271,7 +276,7 @@ export class API {
         ["restrict", opts.restrict || "public"],
         ["offset", opts.offset]
       ],
-      unpack: unpack
+      unpack
     });
   }
 
@@ -279,7 +284,7 @@ export class API {
   globalFeed = (opts: {
     type?: "illust" | "manga",
     offset?: number
-  } = {}): Promise<Paged<Array<Illust>> | null> => {
+  } = {}): Promise<Paged<Array<Illust>>> => {
     const unpack = (resp: raw.IllustList): Paged<Array<Illust>> => [
       resp.illusts.map(i => to.Illust(i)),
       this.nextPage(resp.next_url, unpack)
@@ -292,29 +297,187 @@ export class API {
         ["content_type", opts.type || "illust"],
         ["offset", opts.offset]
       ],
-      unpack: unpack
+      unpack
     });
   }
 
 
-  /*
-  ranking = (opts: {
-    date?: Date,
-    offset?: number
-  } = {}): Promise<Paged<Array<Illust>>> => {
-    return this.fetch({
-      method: "GET",
-      url: "v1/illust/ranking",
-      params: [
-        ["date", opts.date],
-        ["offset", opts.offset]
-      ]
-    });
-  };
-  */
+  relatedIllusts = (startId: number, prev: Array<number> = []): Promise<Paged<Array<Illust>>> => {
+    const unpack = (resp: raw.IllustList): Paged<Array<Illust>> => [
+      resp.illusts.map(i => to.Illust(i)),
+      this.nextPage(resp.next_url, unpack)
+    ];
 
+    return this.apiReq<raw.IllustList,Paged<Array<Illust>>>({
+      method: "GET",
+      url: "v2/illust/related",
+      params: [
+        ["illust_id", startId],
+        ["seed_illust_ids", prev]
+      ],
+      unpack
+    });
+  }
+
+
+  searchIllusts = (query: string, opts: {
+    match?: "partial_match_for_tags" | "exact_match_for_tags" | "title_and_caption",
+    within?: "within_last_day" | "within_last_week" | "within_last_month" | [Date, Date],
+    sortMode?: "date_desc" | "date_asc",
+    offset?: number
+  } = {}): Promise<Paged<Illust[]>> => {
+    const unpack = (resp: raw.IllustList): Paged<Array<Illust>> => [
+      resp.illusts.map(i => to.Illust(i)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    const params: Params.t = [
+      ["word", query],
+      ["sort", opts.sortMode || "date_desc"],
+      ["search_target", opts.match || "partial_match_for_tags"],
+      ["offset", opts.offset]
+    ];
+
+    if (opts.within instanceof Array) {
+      const [start, end] = (opts.within[0] > opts.within[1])
+        ? [opts.within[1], opts.within[0]]
+        : [opts.within[0], opts.within[1]];
+
+      params.push(
+        ["start_date", start],
+        ["end_date", end]
+      );
+    } else if (opts.within) {
+      params.push(["duration", opts.within]);
+    }
+
+    return this.apiReq<raw.IllustList,Paged<Illust[]>>({
+      method: "GET",
+      url: "v1/search/illust",
+      params, unpack
+    });
+  }
+
+
+  autoComplete = (query: string): Promise<string[]> => {
+    return this.apiReq<{ search_auto_complete_keywords: string[] },string[]>({
+      method: "GET",
+      url: "v1/search/autocomplete",
+      params: [
+        ["word", query]
+      ],
+      unpack: (resp) => resp.search_auto_complete_keywords
+    });
+  }
+
+
+  bookmarkIllust = async (id: number, opts: {
+    restrict?: "public" | "private",
+    tags?: string[]
+  } = {}): Promise<void> => {
+    await this.apiReq({
+      method: "POST",
+      url: "v2/illust/bookmark/add",
+      params: [
+        ["illust_id", id],
+        ["restrict", opts.restrict || "public"],
+        ["tags", opts.tags]
+      ],
+      unpack: (_) => {}
+    });
+  }
+
+
+  unbookmarkIllust = async (id: number): Promise<void> => {
+    await this.apiReq({
+      method: "POST",
+      url: "v1/illust/bookmark/delete",
+      params: [["illust_id", id]],
+      unpack: (_) => {}
+    });
+  }
 }
 
+
+
+export class InvalidCredentials extends Error {
+  __proto__: Error;
+  constructor() {
+      const trueProto = new.target.prototype;
+      super();
+
+      this.__proto__ = trueProto;
+  }
+}
+
+
+
+export type Lazy<T> = () => T;
+
+export type Paged<T> = [ T, (() => Promise<Paged<T>>) | null];
+
+
+namespace Params {
+  export type t = Array<[string, param]>;
+
+  // We include `undefined` in the type to allow optional parameters to be left
+  // out when calling the function, and then filtered out in API#apiReq.
+  export type param =
+    | string | number | Date
+    | Array<string> | Array<number>
+    | undefined;
+
+  export const toUrlParams = (params: t): URLSearchParams => {
+    const out = new URLSearchParams();
+
+    for (const [name, param] of params) {
+      if (!param) continue;
+
+      if (param instanceof Date) {
+        out.append(name, `${param.getFullYear()}-${param.getMonth() + 1}-${param.getDate()}`);
+      } else if (param instanceof Array) {
+        for (const [i, c] of param.entries()) {
+          out.append(`${name}[${i}]`, c.toString());
+        }
+      } else {
+        out.append(name, param.toString());
+      }
+    }
+
+    return out;
+  };
+}
+
+
+interface Endpoint<T,U> {
+  url: string;
+  method: "GET" | "POST";
+  params: Array<[string, Params.param | undefined]> | URLSearchParams;
+  unpack: (raw: T) => U;
+}
+
+
+namespace Credentials {
+  export type t = Token | Credentials | LoggedIn;
+
+  export interface Token {
+    state: "token";
+    refreshToken: string;
+  }
+
+  export interface Credentials {
+    state: "password";
+    username: string;
+    password: string;
+  }
+
+  export interface LoggedIn {
+    state: "logged";
+    refreshToken : string;
+    accessToken: string;
+    expires: Date;
+  }
+}
 
 
 
@@ -620,7 +783,7 @@ namespace to {
     if (i.meta_single_page.original_image_url) {
       illust.images = [i.meta_single_page.original_image_url];
     } else {
-      const multiUrls = i.meta_pages as Array<raw.MultiIllustUrls>;
+      const multiUrls = i.meta_pages!;
       illust.images = multiUrls.map(x => x.image_urls.original);
     }
 
@@ -698,369 +861,3 @@ export interface Illust extends Work {
   dimensions: [number, number];
   sexualContent: SexualContent;
 }
-
-
-export type Lazy<T> = () => T;
-
-
-export type Paged<T> = [ T, (() => Promise<Paged<T> | null>) | null];
-
-
-export type NextPage<T> = Lazy<Promise<Paged<T>>>;
-
-
-namespace Params {
-  // We include `undefined` in the type to allow optional parameters to be left
-  // out when calling the function, and then filtered out in API#apiRequest.
-  export type t = Array<[string, param]>;
-
-  export type param = string | number | Date;
-
-  export const toString = (param: param): string => {
-    if (param instanceof Date) {
-      return `${param.getFullYear()}-${param.getMonth() + 1}-${param.getDate()}`;
-    } else {
-      return param.toString();
-    }
-  };
-}
-
-
-interface Endpoint<T,U> {
-  url: string;
-  method: "GET" | "POST";
-  params: Array<[string, Params.param | undefined]> | URLSearchParams;
-  unpack: (raw: T) => U;
-}
-
-
-/*
-export const httpGet = async <T,E>(
-  url: string,
-  headers: Array<[string, string]>,
-  params: Array<[string, string]>
-): Promise<T> => {
-  const searchParams = new URLSearchParams(),
-        outHeaders   = new Headers();
-
-  for (const [name, content] of params)
-    searchParams.append(name, content);
-
-  for (const [name, content] of headers)
-    outHeaders.append(name, content);
-
-  const resp = await fetch(url + '?' + searchParams.toString(), {
-    method: "GET",
-    headers: outHeaders,
-  });
-
-  if (resp.ok) {
-    try {
-      return await resp.json();
-    } catch (e) {
-      throw { kind: "parse", msg: "Failed to parse the response" };
-    }
-  } else {
-
-  }
-};
-*/
-
-
-namespace Credentials {
-  export type t = Token | Credentials | LoggedIn;
-
-  export interface Token {
-    state: "token";
-    refreshToken: string;
-  }
-
-  export interface Credentials {
-    state: "password";
-    username: string;
-    password: string;
-  }
-
-  export interface LoggedIn {
-    state: "logged";
-    refreshToken : string;
-    accessToken: string;
-    expires: Date;
-  }
-}
-
-
-/*
-export class API_ {
-  private creds: Credentials.t;
-
-
-  constructor(args: { refreshToken: string });
-  constructor(args: { username: string, password: string });
-  constructor(args: { refreshToken: string, accessToken: string, expires: Date });
-  constructor(args: any) {
-    if (args.refreshToken && (!args.expires || args.expires > new Date())) {
-      this.creds = {
-        state: "token",
-        refreshToken: args.refreshToken
-      };
-    } else if (args.username && args.password) {
-      this.creds = {
-        state: "password",
-        username: args.username,
-        password: args.password
-      };
-    } else if (args.refreshToken && args.accessToken && args.expires) {
-      this.creds = {
-        state: "logged",
-        refreshToken: args.refreshToken,
-        accessToken: args.accessToken,
-        expires: args.expires
-      };
-    } else {
-      throw new Error("Invalid arguments passed to API constructor");
-    }
-  }
-
-
-  private fetch = async <T>(endpoint: Endpoint): Promise<T> => {
-    const token = await this.login();
-    const filteredParams: Array<[string, string]> = [];
-
-    for (const [name, content] of endpoint.params)
-      if (content) filteredParams.push([name, Params.toString(content)]);
-
-    try {
-      return await this.fetcher<T,{}>(endpoint.method, endpoint.url, [
-        ["Authorization", `Bearer ${accessToken}`]
-      ], filteredParams)
-    } catch (error) {
-    }
-  };
-
-
-  myFeed = (opts: {
-    restrict?: "public" | "private" | "all",
-    offset?: number
-  } = {}): Promise<Paged<Array<Illust>>> => {
-    return this.fetch({
-      method: "GET",
-      url: "v2/illust/follow",
-      params: [
-        ["restrict", opts.restrict || "public"],
-        ["offset", opts.offset]
-      ]
-    });
-  };
-
-
-  myPixivFeed = (opts: {
-    offset?: number
-  } = {}): Promise<Paged<Array<Illust>>> => {
-    return this.fetch({
-      method: "GET",
-      url: "v2/illust/mypixiv",
-      params: [
-        ["offset", opts.offset]
-      ]
-    });
-  };
-
-  
-  globalFeed = (opts: {
-    type?: "illust" | "manga",
-    offset?: number
-  } = {}): Promise<Paged<Array<Illust>>> => {
-    return this.fetch({
-      method: "GET",
-      url: "v1/illust/new",
-      params: [
-        ["content_type", opts.type || "illust"],
-        ["offset", opts.offset]
-      ]
-    });
-  };
-
-
-  live = (opts: {
-    type?: "following" /* | ... ,
-    offset?: number
-  } = {}): Promise<Paged<Array<Unimplemented>>> => {
-    return this.fetch({
-      method: "GET",
-      url: "v1/live/list",
-      params: [
-        ["list_type", opts.type || "following"],
-        ["offset", opts.offset]
-      ]
-    });
-  };
-
-
-  ranking = (opts: {
-    date?: Date,
-    offset?: number
-  } = {}): Promise<Paged<Array<Illust>>> => {
-    return this.fetch({
-      method: "GET",
-      url: "v1/illust/ranking",
-      params: [
-        ["date", opts.date],
-        ["offset", opts.offset]
-      ]
-    });
-  };
-
-
-  // @Stub
-  recommended = (opts: {
-  } = {}): Promise<Paged<Array<Illust>>> => {
-    return this.fetch({
-      method: "GET",
-      url: "v1/illust/recommended",
-      params: []
-    });
-  };
-
-
-  search = (query: string, opts: {
-    match?: "partial_match_for_tags" | "exact_match_for_tags" | "title_and_caption",
-    within?: "within_last_day" | "within_last_week" | "within_last_month",
-    sortMode?: "date_desc" | "date_asc",
-    offset?: number
-  } = {}): Promise<Paged<Array<Illust>>> => {
-    return this.fetch({
-      method: "GET",
-      url: "v1/search/illust",
-      params: [
-        ["word", query],
-        ["search_target", opts.match || "partial_match_for_tags"],
-        ["sort", opts.sortMode || "date_desc"],
-        ["duration", opts.within],
-        ["offset", opts.offset]
-      ]
-    });
-  };
-
-
-  autoComplete = (query: string): Promise<Array<string>> => {
-    return this.fetch({
-      method: "GET",
-      url: "v1/search/autocomplete",
-      params: [
-        ["word", query]
-      ]
-    });
-  };
-
-
-  bookmark = (id: number, opts: {
-    restrict?: "public" | "private",
-    tags?: Array<string>
-  } = {}): Promise<void> => {
-    return this.fetch({
-      method: "POST",
-      url: "v1/illust/bookmark/add",
-      params: [
-        ["illust_id", id],
-        ["restrict", opts.restrict || "public"],
-        ["tags", ""]
-      ]
-    })
-  };
-}
-
-
-
-/*
-export class API {
-  private creds: Credentials.t;
-  private info: MyInfo | null = null;
-
-
-  constructor(args: { refreshToken: string });
-  constructor(args: { username: string, password: string });
-  constructor(args: { refreshToken: string, accessToken: string, expires: Date });
-  constructor(args: any) {
-    if (args.refreshToken && (!args.expires || args.expires > new Date())) {
-      this.creds = {
-        state: "token",
-        refreshToken: args.refreshToken
-      };
-    } else if (args.username && args.password) {
-      this.creds = {
-        state: "password",
-        username: args.username,
-        password: args.password
-      };
-    } else if (args.refreshToken && args.accessToken && args.expires) {
-      this.creds = {
-        state: "logged",
-        refreshToken: args.refreshToken,
-        accessToken: args.accessToken,
-        expires: args.expires
-      };
-    } else {
-      throw new Error("Invalid arguments passed to API constructor");
-    }
-  }
-
-
-  get userInfo() {
-    if (!this.info) {
-      // @Stub
-      this.info = {
-        name: "test",
-        nick: "test",
-        id: 1,
-        email: "test@ho.tlo.li",
-        avatar: {
-          big: "test",
-          medium: "test",
-          small: "test"
-        }
-      };
-    }
-
-    return this.info;
-  }
-
-
-}
-
-
-  // Returns the access token, logging in if necessary. The "force" parameter
-  // forces a new login even if the cached access token has not expired yet.
-  private getAccessToken = async (force = false): Promise<string> => {
-    const c = this.creds;
-    if (c.state === "logged" && !force && c.expires > new Date()) {
-      // The token is cached and valid.
-      return c.accessToken;
-    }
-
-    let request;
-    if (c.state === "token" || c.state === "logged") {
-      request = authRequest([
-        ["grant_type", "refresh_token"],
-        ["refresh_token", c.refreshToken]
-      ]);
-    } else if (c.state === "password") {
-      request = authRequest([
-        ["grant_type", "password"],
-        ["username", c.username],
-        ["password", c.password]
-      ]);
-    } else {
-      console.error("Invalid API state");
-      throw new Error("fug");
-    }
-
-    const r: raw.Login = await request;
-  }
-};
-
-
-private nextPage = <T, U>(url: string | null, unpack: (response: U) => T): Thunk<Promise<T>> | null => {
-
-}
-*/
