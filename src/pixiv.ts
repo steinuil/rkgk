@@ -39,13 +39,26 @@ export interface Api {
     prev?: Array<number>
   ): Promise<Paged<Illust[]>>;
 
-  // Search for illustrations matching a given query.
+  // Search for illustrations and manga matching a given query.
   searchIllusts(query: string, opts?: {
     match?: "partial_match_for_tags" | "exact_match_for_tags" | "title_and_caption",
     within?: "within_last_day" | "within_last_week" | "within_last_month" | [Date, Date],
     sortMode?: "date_desc" | "date_asc",
     offset?: number
   }): Promise<Paged<Illust[]>>;
+
+  // Search for novels matching a given query.
+  searchNovels(query: string, opts?: {
+    match?: "partial_match_for_tags" | "exact_match_for_tags" | "title_and_caption",
+    within?: "within_last_day" | "within_last_week" | "within_last_month" | [Date, Date],
+    sortMode?: "date_desc" | "date_asc",
+    offset?: number
+  }): Promise<Paged<Novel[]>>;
+
+  // Search for users.
+  searchUsers(query: string, opts?: {
+    offset?: number
+  }): Promise<Paged<UserPreview[]>>;
 
   // Tag completions for a given search query.
   autoComplete(query: string): Promise<string[]>;
@@ -426,7 +439,7 @@ export class Api {
     sortMode?: "date_desc" | "date_asc",
     offset?: number
   } = {}): Promise<Paged<Illust[]>> => {
-    const unpack = (resp: Raw.IllustList): Paged<Array<Illust>> => [
+    const unpack = (resp: Raw.IllustList): Paged<Illust[]> => [
       resp.illusts.map(i => To.illust(i)),
       this.nextPage(resp.next_url, unpack)
     ];
@@ -455,6 +468,65 @@ export class Api {
       method: "GET",
       url: "v1/search/illust",
       params, unpack
+    });
+  }
+
+
+  searchNovels = (query: string, opts: {
+    match?: "partial_match_for_tags" | "exact_match_for_tags" | "title_and_caption",
+    within?: "within_last_day" | "within_last_week" | "within_last_month" | [Date, Date],
+    sortMode?: "date_desc" | "date_asc",
+    offset?: number
+  } = {}): Promise<Paged<Novel[]>> => {
+    const unpack = (resp: Raw.NovelList): Paged<Novel[]> => [
+      resp.novels.map(n => To.novel(n)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    const params: Params.t = [
+      ["word", query],
+      ["sort", opts.sortMode || "date_desc"],
+      ["search_target", opts.match || "partial_match_for_tags"],
+      ["offset", opts.offset]
+    ];
+
+    if (opts.within instanceof Array) {
+      const [start, end] = (opts.within[0] > opts.within[1])
+        ? [opts.within[1], opts.within[0]]
+        : [opts.within[0], opts.within[1]];
+
+      params.push(
+        ["start_date", start],
+        ["end_date", end]
+      );
+    } else if (opts.within) {
+      params.push(["duration", opts.within]);
+    }
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/search/novel",
+      params, unpack
+    });
+  }
+
+
+  searchUsers = (query: string, opts: {
+    offset?: number
+  } = {}): Promise<Paged<UserPreview[]>> => {
+    const unpack = (resp: Raw.UserPreviews): Paged<UserPreview[]> => [
+      resp.user_previews.map(u => To.userPreview(u)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/search/user",
+      params: [
+        ["word", query],
+        ["offset", opts.offset]
+      ],
+      unpack
     });
   }
 
@@ -699,6 +771,23 @@ namespace To {
     novel.series = n.series;
     return novel;
   };
+
+  export const userPreview = (u: Raw.UserPreview): UserPreview => {
+    return {
+      user: user(u.user),
+      illusts: u.illusts.map(i => illust(i)),
+      novels: u.novels.map(n => novel(n)),
+      muted: u.is_muted
+    };
+  };
+}
+
+
+export interface UserPreview {
+  user: User;
+  illusts: Array<Illust>;
+  novels: Array<Novel>;
+  muted: boolean;
 }
 
 

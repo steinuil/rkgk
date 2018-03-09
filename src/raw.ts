@@ -172,6 +172,14 @@ export interface Article {
 }
 
 
+export interface UserPreview {
+  user: User;
+  illusts: Array<Illust>;
+  novels: Array<Novel>;
+  is_muted: boolean;
+}
+
+
 // List pages
 export interface Paged {
   next_url: string | null;
@@ -189,12 +197,7 @@ export interface NovelList extends Paged {
 
 
 export interface UserPreviews extends Paged {
-  user_previews: Array<{
-    user: User;
-    illusts: Array<Illust>;
-    novels: Array<Novel>;
-    is_muted: boolean;
-  }>;
+  user_previews: Array<UserPreview>;
 }
 
 
