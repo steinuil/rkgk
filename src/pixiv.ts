@@ -12,6 +12,14 @@ export interface Api {
     offset?: number
   }): Promise<Paged<Illust[]>>;
 
+  // Latest illustrations globally.
+  globalFeed(opts?: {
+    type?: "illust" | "manga",
+    offset?: number
+  }): Promise<Paged<Illust[]>>;
+
+  myPixivFeed(o?: { offset?: number }): Promise<Paged<Illust[]>>;
+
   // Latest novels by the users you follow.
   myNovelFeed(opts?:{
     restrict?: "public" | "private" | "all",
@@ -19,10 +27,11 @@ export interface Api {
   }): Promise<Paged<Novel[]>>;
 
   // Latest illustrations globally.
-  globalFeed(opts?: {
-    type?: "illust" | "manga",
+  globalNovelFeed(opts?: {
     offset?: number
-  }): Promise<Paged<Illust[]>>;
+  }): Promise<Paged<Novel[]>>;
+
+  myPixivNovelFeed(o?: { offset?: number }): Promise<Paged<Novel[]>>;
 
   // Recommendations based on an illustration.
   relatedIllusts(
@@ -98,11 +107,12 @@ export interface Api {
 // The username and password are invalid.
 export class Api {
   private creds: Credentials.t;
+  private domains: Domains;
 
-  constructor(args: { refreshToken: string });
-  constructor(args: { username: string, password: string });
-  constructor(args: { refreshToken: string, accessToken: string, expires: Date });
-  constructor(args: any) {
+  constructor(args: { refreshToken: string }, d: Domains);
+  constructor(args: { username: string, password: string }, d: Domains);
+  constructor(args: { refreshToken: string, accessToken: string, expires: Date }, d: Domains);
+  constructor(args: any, d: Domains) {
     if (args.refreshToken && (!args.expires || args.expires > new Date())) {
       this.creds = {
         state: "token",
@@ -124,6 +134,8 @@ export class Api {
     } else {
       throw new Error("Invalid arguments passed to API constructor");
     }
+
+    this.domains = d;
   }
 
 
@@ -146,7 +158,7 @@ export class Api {
     outHeaders.append("Authorization", `Bearer ${token}`);
 
     const resp = await fetch(
-      "https://app-api.pixiv.net/" + endpoint.url + "?" + outParams.toString(), {
+      this.domains.api + endpoint.url + "?" + outParams.toString(), {
         method: endpoint.method,
         headers: outHeaders
       }
@@ -210,7 +222,7 @@ export class Api {
 
     // Fetch the access token
     const r = await fetch(
-      "https://oauth.secure.pixiv.net/auth/token", {
+      this.domains.tokenAuth, {
         method: "POST",
         headers: headers,
         body: outParams.toString()
@@ -260,14 +272,13 @@ export class Api {
     try {
       const url_ = new URL(url);
 
-      return () => {
-        return this.apiReq<T,U>({
+      return () =>
+        this.apiReq<T,U>({
           method: "GET",
           url: url_.pathname.slice(1),
           params: url_.searchParams,
           unpack: unpack
         });
-      };
 
     } catch (e) {
       return null;
@@ -281,7 +292,7 @@ export class Api {
     restrict?: "public" | "private" | "all",
     offset?: number
   } = {}): Promise<Paged<Array<Illust>>> => {
-    const unpack = (resp: Raw.IllustList): Paged<Array<Illust>> => [
+    const unpack = (resp: Raw.IllustList): Paged<Illust[]> => [
       resp.illusts.map(i => To.illust(i)),
       this.nextPage(resp.next_url, unpack)
     ];
@@ -298,12 +309,50 @@ export class Api {
   }
 
 
+  globalFeed = (opts: {
+    type?: "illust" | "manga",
+    offset?: number
+  } = {}): Promise<Paged<Array<Illust>>> => {
+    const unpack = (resp: Raw.IllustList): Paged<Illust[]> => [
+      resp.illusts.map(i => To.illust(i)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/illust/new",
+      params: [
+        ["content_type", opts.type || "illust"],
+        ["offset", opts.offset]
+      ],
+      unpack
+    });
+  }
+
+
+  myPixivFeed = (opts: {
+    offset?: number
+  } = {}): Promise<Paged<Illust[]>> => {
+    const unpack = (resp: Raw.IllustList): Paged<Illust[]> => [
+      resp.illusts.map(i => To.illust(i)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v2/illust/mypixiv",
+      params: [["offset", opts.offset]],
+      unpack
+    });
+  }
+
+
   myNovelFeed = (opts: {
     restrict?: "public" | "private" | "all",
     offset?: number
   } = {}): Promise<Paged<Novel[]>> => {
     const unpack = (resp: Raw.NovelList): Paged<Novel[]> => [
-      resp.novels.map(i => To.novel(i)),
+      resp.novels.map(n => To.novel(n)),
       this.nextPage(resp.next_url, unpack)
     ];
 
@@ -319,22 +368,35 @@ export class Api {
   }
 
 
-  globalFeed = (opts: {
-    type?: "illust" | "manga",
+  globalNovelFeed = (opts: {
     offset?: number
-  } = {}): Promise<Paged<Array<Illust>>> => {
-    const unpack = (resp: Raw.IllustList): Paged<Array<Illust>> => [
-      resp.illusts.map(i => To.illust(i)),
+  } = {}): Promise<Paged<Novel[]>> => {
+    const unpack = (resp: Raw.NovelList): Paged<Novel[]> => [
+      resp.novels.map(n => To.novel(n)),
       this.nextPage(resp.next_url, unpack)
     ];
 
     return this.apiReq({
       method: "GET",
-      url: "v1/illust/new",
-      params: [
-        ["content_type", opts.type || "illust"],
-        ["offset", opts.offset]
-      ],
+      url: "v1/novel/new",
+      params: [["offset", opts.offset]],
+      unpack
+    });
+  }
+
+
+  myPixivNovelFeed = (opts: {
+    offset?: number
+  } = {}): Promise<Paged<Novel[]>> => {
+    const unpack = (resp: Raw.NovelList): Paged<Novel[]> => [
+      resp.novels.map(n => To.novel(n)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/novel/mypixiv",
+      params: [["offset", opts.offset]],
       unpack
     });
   }
@@ -494,6 +556,12 @@ export class InvalidCredentials extends Error {
     super();
     Object.setPrototypeOf(this, InvalidCredentials.prototype);
   }
+}
+
+
+export interface Domains {
+  api: string;
+  tokenAuth: string;
 }
 
 

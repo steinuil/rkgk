@@ -9,10 +9,12 @@
   , "jsx": "react"
 
   , "sourceMap": true
-  , "outDir": "_build/ts"
+  , "outFile": "_build/pixiv.js"
 
-  , "module": "commonJS"
+  , "module": "system"
   , "target": "es2015"
+
+  , "baseUrl": "node_modules"
   }
 
 , "files":
