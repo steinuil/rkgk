@@ -33,12 +33,6 @@ export interface Api {
 
   myPixivNovelFeed(o?: { offset?: number }): Promise<Paged<Novel[]>>;
 
-  // Recommendations based on an illustration.
-  relatedIllusts(
-    startId: number,
-    prev?: Array<number>
-  ): Promise<Paged<Illust[]>>;
-
   // Search for illustrations and manga matching a given query.
   searchIllusts(query: string, opts?: {
     match?: "partial_match_for_tags" | "exact_match_for_tags" | "title_and_caption",
@@ -60,8 +54,27 @@ export interface Api {
     offset?: number
   }): Promise<Paged<UserPreview[]>>;
 
+  // Most popular illustrations and manga for a given query.
+  searchPopularIllusts(query: string, opts?: {
+    match?: "partial_match_for_tags" | "exact_match_for_tags" | "title_and_caption"
+  }): Promise<Illust[]>;
+
+  // Most popular novels for a given query.
+  searchPopularNovels(query: string, opts?: {
+    match?: "partial_match_for_tags" | "exact_match_for_tags" | "title_and_caption"
+  }): Promise<Novel[]>;
+
   // Tag completions for a given search query.
   autoComplete(query: string): Promise<string[]>;
+
+  // Recommendations based on an illustration.
+  relatedIllusts(
+    startId: number,
+    prev?: Array<number>
+  ): Promise<Paged<Illust[]>>;
+
+  // Recommended users based on a seed user.
+  relatedUsers(id: number): Promise<UserPreview[]>;
 
   // Bookmark an illustration or a manga.
   bookmarkIllust(id: number, opts?: {
@@ -86,18 +99,12 @@ export interface Api {
 
   unfollow(id: number): Promise<void>;
 
-  /*
-  // Latest illustrations by users in your MyPixiv.
-  myPixivFeed(opts?: {
-    offset?: number
-  }): Promise<Paged<Array<Illust>>>;
-  */
-
   // Users that are currently livestreaming.
+  // @stub
   live(opts?: {
-    type?: "following" /* | ... */,
+    type?: "following" | "popular",
     offset?: number
-  }): Promise<Paged<Unimplemented[]> | null>;
+  }): Promise<Paged<{}[]> | null>;
 
   // Popular illustrations.
   ranking(opts?: {
@@ -415,24 +422,7 @@ export class Api {
   }
 
 
-  relatedIllusts = (startId: number, prev: number[] = []): Promise<Paged<Illust[]>> => {
-    const unpack = (resp: Raw.IllustList): Paged<Array<Illust>> => [
-      resp.illusts.map(i => To.illust(i)),
-      this.nextPage(resp.next_url, unpack)
-    ];
-
-    return this.apiReq({
-      method: "GET",
-      url: "v2/illust/related",
-      params: [
-        ["illust_id", startId],
-        ["seed_illust_ids", prev]
-      ],
-      unpack
-    });
-  }
-
-
+  // --------------------------------------------------------------------------
   searchIllusts = (query: string, opts: {
     match?: "partial_match_for_tags" | "exact_match_for_tags" | "title_and_caption",
     within?: "within_last_day" | "within_last_week" | "within_last_month" | [Date, Date],
@@ -531,6 +521,42 @@ export class Api {
   }
 
 
+  searchPopularIllusts = (query: string, opts: {
+    match?: "partial_match_for_tags" | "exact_match_for_tags" | "title_and_caption"
+  } = {}): Promise<Illust[]> => {
+    const unpack = (resp: Raw.PopularIllusts): Illust[] =>
+      resp.illusts.map(i => To.illust(i));
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/search/popular-preview/illust",
+      params: [
+        ["word", query],
+        ["search_target", opts.match || "partial_match_for_tags"]
+      ],
+      unpack
+    });
+  }
+
+
+  searchPopularNovels = (query: string, opts: {
+    match?: "partial_match_for_tags" | "exact_match_for_tags" | "title_and_caption"
+  } = {}): Promise<Novel[]> => {
+    const unpack = (resp: Raw.PopularNovels): Novel[] =>
+      resp.novels.map(n => To.novel(n));
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/search/popular-preview/illust",
+      params: [
+        ["word", query],
+        ["search_targets", opts.match || "partial_match_for_tags"]
+      ],
+      unpack
+    });
+  }
+
+
   autoComplete = (query: string): Promise<string[]> => {
     return this.apiReq<{ search_auto_complete_keywords: string[] },string[]>({
       method: "GET",
@@ -543,6 +569,41 @@ export class Api {
   }
 
 
+  // --------------------------------------------------------------------------
+  relatedIllusts = (startId: number, prev: number[] = []): Promise<Paged<Illust[]>> => {
+    const unpack = (resp: Raw.IllustList): Paged<Array<Illust>> => [
+      resp.illusts.map(i => To.illust(i)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v2/illust/related",
+      params: [
+        ["illust_id", startId],
+        ["seed_illust_ids", prev]
+      ],
+      unpack
+    });
+  }
+
+
+  relatedUsers = (id: number): Promise<UserPreview[]> => {
+    const unpack = (resp: Raw.UserPreviews): UserPreview[] =>
+      resp.user_previews.map(u => To.userPreview(u));
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/user/related",
+      params: [
+        ["seed_user_id", id]
+      ],
+      unpack
+    });
+  }
+
+
+  // --------------------------------------------------------------------------
   bookmarkIllust = async (id: number, opts: {
     restrict?: "public" | "private",
     tags?: string[]
@@ -829,9 +890,6 @@ export interface Work {
   commentCount: number | null;*/
   bookmarked: boolean;
 }
-
-
-export interface Unimplemented {}
 
 
 export type IllustType = "illust" | "manga" | "ugoira";

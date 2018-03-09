@@ -237,6 +237,18 @@ export interface TrendingTags {
 }
 
 
+export interface PopularIllusts {
+  illusts: Array<Illust>;
+  search_span_limit: number;
+}
+
+
+export interface PopularNovels {
+  novels: Array<Novel>;
+  search_span_limit: number;
+}
+
+
 export interface IllustRanking {
   illusts: Array<Illust>;
   contest_exists: boolean;
