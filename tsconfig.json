@@ -1,26 +1,22 @@
 { "compilerOptions":
-  { "target": "es2015"
-  , "module": "CommonJS"
-
-  , "strict": true
+  { "strict": true
   , "noImplicitReturns": true
-
   , "noUnusedLocals": true
   , "noUnusedParameters": true
-
-  , "alwaysStrict": true
   , "forceConsistentCasingInFileNames": true
 
+  , "removeComments": true
   , "jsx": "react"
 
-  , "removeComments": true
-  , "declaration": true
   , "sourceMap": true
+  , "outDir": "_build/ts"
 
-  , "outDir": "./_cache/ts"
+  , "module": "commonJS"
+  , "target": "es2015"
   }
 
 , "files":
   [ "src/pixiv.ts"
+  , "src/raw.ts"
   ]
 }

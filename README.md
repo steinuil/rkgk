@@ -29,3 +29,4 @@ Because having alternatives is always good.
 * [PixivDeck](https://github.com/akameco/PixivDeck) - desktop client using Electron, very similar to rkgk (except it's actually finished). It has a TweetDeck-like UI, which I don't care much for. Uses [pixiv-app-api](https://github.com/akameco/pixiv-app-api) as API wrapper.
 * [PxView](https://github.com/alphasp/pxview) - mobile client using React Native. Uses [pixiv-api-client](https://github.com/alphasp/pixiv-api-client) as API wrapper.
 * [PyPixiv](https://github.com/Yukariin/PyPixiv) - Python API wrapper for the Pixiv API, supersedes PixivPy which hasn't been updated in a few months now.
+* [Patchouli](https://github.com/FlandreDaisuki/Patchouli) - Tampermonkey script to enhance Pixiv browsing

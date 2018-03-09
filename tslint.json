@@ -1,0 +1,22 @@
+{ "tslint.enable": true
+, "rules":
+  { "semicolon": true
+  , "quotemark":
+    [ true
+    , "double"
+    ]
+  , "prefer-function-over-method": true
+  , "no-return-await": true
+  , "indent": [true, "spaces", 2]
+  , "linebreak-style": [true, "LF"]
+  , "arrow-return-shorthand": true
+  , "no-trailing-whitespace": true
+  , "class-name": true
+  , "variable-name":
+    [ true
+    , "check-format"
+    , "allow-trailing-underscore"
+    ]
+  , "import-spacing": true
+  }
+}

@@ -1,14 +1,22 @@
-// API endpoints
-export interface API {
+import * as Raw from "./raw";
+
+
+export interface Api {
   // Reset credentials to a username and password in case
   // an InvalidCredentials error is thrown.
   setCredentials(username: string, password: string): void;
 
-  // Latest illustrations by the users you follow.
+  // Latest manga and illustrations by the users you follow.
   myFeed(opts?: {
     restrict?: "public" | "private" | "all",
     offset?: number
   }): Promise<Paged<Illust[]>>;
+
+  // Latest novels by the users you follow.
+  myNovelFeed(opts?:{
+    restrict?: "public" | "private" | "all",
+    offset?: number
+  }): Promise<Paged<Novel[]>>;
 
   // Latest illustrations globally.
   globalFeed(opts?: {
@@ -33,13 +41,28 @@ export interface API {
   // Tag completions for a given search query.
   autoComplete(query: string): Promise<string[]>;
 
-  // Bookmark an illustration.
+  // Bookmark an illustration or a manga.
   bookmarkIllust(id: number, opts?: {
     restrict?: "public" | "private",
     tags?: string[]
   }): Promise<void>;
 
   unbookmarkIllust(id: number): Promise<void>;
+
+  // Bookmark a novel.
+  bookmarkNovel(id: number, opts?: {
+    restrict?: "public" | "private",
+    tags?: string[]
+  }): Promise<void>;
+
+  unbookmarkNovel(id: number): Promise<void>;
+
+  // Follor a user.
+  follow(id: number, opts?: {
+    restrict?: "public" | "private",
+  }): Promise<void>;
+
+  unfollow(id: number): Promise<void>;
 
   /*
   // Latest illustrations by users in your MyPixiv.
@@ -60,12 +83,6 @@ export interface API {
     offset?: number
   }): Promise<Paged<Illust[]> | null>;
 
-  follow(id: number, opts: {
-    restrict?: "public" | "private",
-  }): Promise<void>;
-
-  unfollow(id: number): Promise<void>;
-
   userDetail(id: number): Promise<User>;
 
   illustInfo(id: number): Promise<Illust>;
@@ -79,7 +96,7 @@ export interface API {
 
 // The only instance in which this class throws an error is when
 // The username and password are invalid.
-export class API {
+export class Api {
   private creds: Credentials.t;
 
   constructor(args: { refreshToken: string });
@@ -137,11 +154,11 @@ export class API {
 
     if (!resp.ok) {
       try {
-        const e: raw.ApiError = await resp.json();
+        const e: Raw.ApiError = await resp.json();
         const err = e.error.user_message || e.error.message;
         if (err.slice(-13) === "invalid_grant") {
           // The token is invalid or has expired; retry
-          return await this.apiReq<T,U>(endpoint);
+          this.apiReq<T,U>(endpoint);
         } else {
           throw new Error("Server returned error: " + err.toString());
         }
@@ -202,7 +219,7 @@ export class API {
 
     if (!r.ok) {
       try {
-        const e: raw.AuthError = await r.json();
+        const e: Raw.AuthError = await r.json();
         const err = e.errors.system.message;
         if (err.slice(0,3) === "103") {
           throw new InvalidCredentials();
@@ -216,7 +233,7 @@ export class API {
 
     try {
       // Parse the response and cache the credentials for future requests
-      const resp: raw.Login = await r.json();
+      const resp: Raw.Login = await r.json();
       const expires = new Date(
         (new Date()).getTime() + (resp.response.expires_in * 1000)
       );
@@ -264,16 +281,37 @@ export class API {
     restrict?: "public" | "private" | "all",
     offset?: number
   } = {}): Promise<Paged<Array<Illust>>> => {
-    const unpack = (resp: raw.IllustList): Paged<Array<Illust>> => [
-      resp.illusts.map(i => to.Illust(i)),
+    const unpack = (resp: Raw.IllustList): Paged<Array<Illust>> => [
+      resp.illusts.map(i => To.illust(i)),
       this.nextPage(resp.next_url, unpack)
     ];
 
-    return this.apiReq<raw.IllustList,Paged<Array<Illust>>>({
+    return this.apiReq({
       method: "GET",
       url: "v2/illust/follow",
       params: [
-        ["restrict", opts.restrict || "public"],
+        ["restrict", opts.restrict || "all"],
+        ["offset", opts.offset]
+      ],
+      unpack
+    });
+  }
+
+
+  myNovelFeed = (opts: {
+    restrict?: "public" | "private" | "all",
+    offset?: number
+  } = {}): Promise<Paged<Novel[]>> => {
+    const unpack = (resp: Raw.NovelList): Paged<Novel[]> => [
+      resp.novels.map(i => To.novel(i)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/novel/follow",
+      params: [
+        ["restrict", opts.restrict || "all"],
         ["offset", opts.offset]
       ],
       unpack
@@ -285,12 +323,12 @@ export class API {
     type?: "illust" | "manga",
     offset?: number
   } = {}): Promise<Paged<Array<Illust>>> => {
-    const unpack = (resp: raw.IllustList): Paged<Array<Illust>> => [
-      resp.illusts.map(i => to.Illust(i)),
+    const unpack = (resp: Raw.IllustList): Paged<Array<Illust>> => [
+      resp.illusts.map(i => To.illust(i)),
       this.nextPage(resp.next_url, unpack)
     ];
 
-    return this.apiReq<raw.IllustList,Paged<Array<Illust>>>({
+    return this.apiReq({
       method: "GET",
       url: "v1/illust/new",
       params: [
@@ -302,13 +340,13 @@ export class API {
   }
 
 
-  relatedIllusts = (startId: number, prev: Array<number> = []): Promise<Paged<Array<Illust>>> => {
-    const unpack = (resp: raw.IllustList): Paged<Array<Illust>> => [
-      resp.illusts.map(i => to.Illust(i)),
+  relatedIllusts = (startId: number, prev: number[] = []): Promise<Paged<Illust[]>> => {
+    const unpack = (resp: Raw.IllustList): Paged<Array<Illust>> => [
+      resp.illusts.map(i => To.illust(i)),
       this.nextPage(resp.next_url, unpack)
     ];
 
-    return this.apiReq<raw.IllustList,Paged<Array<Illust>>>({
+    return this.apiReq({
       method: "GET",
       url: "v2/illust/related",
       params: [
@@ -326,8 +364,8 @@ export class API {
     sortMode?: "date_desc" | "date_asc",
     offset?: number
   } = {}): Promise<Paged<Illust[]>> => {
-    const unpack = (resp: raw.IllustList): Paged<Array<Illust>> => [
-      resp.illusts.map(i => to.Illust(i)),
+    const unpack = (resp: Raw.IllustList): Paged<Array<Illust>> => [
+      resp.illusts.map(i => To.illust(i)),
       this.nextPage(resp.next_url, unpack)
     ];
 
@@ -351,7 +389,7 @@ export class API {
       params.push(["duration", opts.within]);
     }
 
-    return this.apiReq<raw.IllustList,Paged<Illust[]>>({
+    return this.apiReq({
       method: "GET",
       url: "v1/search/illust",
       params, unpack
@@ -396,20 +434,67 @@ export class API {
       unpack: (_) => {}
     });
   }
-}
 
 
+  bookmarkNovel = async (id: number, opts: {
+    restrict?: "public" | "private",
+    tags?: string[]
+  } = {}): Promise<void> => {
+    await this.apiReq({
+      method: "POST",
+      url: "v2/novel/bookmark/add",
+      params: [
+        ["novel_id", id],
+        ["restrict", opts.restrict || "public"],
+        ["tags", opts.tags]
+      ],
+      unpack: (_) => {}
+    });
+  }
 
-export class InvalidCredentials extends Error {
-  __proto__: Error;
-  constructor() {
-      const trueProto = new.target.prototype;
-      super();
 
-      this.__proto__ = trueProto;
+  unbookmarkNovel = async (id: number): Promise<void> => {
+    await this.apiReq({
+      method: "POST",
+      url: "v1/novel/bookmark/delete",
+      params: [["novel_id", id]],
+      unpack: (_) => {}
+    });
+  }
+
+
+  follow = async (id: number, opts: {
+    restrict?: "public" | "private"
+  } = {}): Promise<void> => {
+    await this.apiReq({
+      method: "POST",
+      url: "v1/user/follow/add",
+      params: [
+        ["user_id", id],
+        ["restrict", opts.restrict || "public"]
+      ],
+      unpack: (_) => {}
+    });
+  }
+
+
+  unfollow = async (id: number): Promise<void> => {
+    await this.apiReq({
+      method: "POST",
+      url: "v1/user/follow/delete",
+      params: [["user_id", id]],
+      unpack: (_) => {}
+    });
   }
 }
 
+
+export class InvalidCredentials extends Error {
+  constructor() {
+    super();
+    Object.setPrototypeOf(this, InvalidCredentials.prototype);
+  }
+}
 
 
 export type Lazy<T> = () => T;
@@ -481,264 +566,15 @@ namespace Credentials {
 
 
 
-namespace raw {
-  export interface Login {
-    response: {
-      access_token: string;
-      refresh_token: string;
-      expires_in: number;
-    };
-  }
 
-  export interface ApiError {
-    error: {
-      user_message: string;
-      message: string;
-      reason: string;
-      user_mesage_detauls: {};
-    };
-  }
-
-  export interface AuthError {
-    has_error: true;
-    errors: {
-      system: {
-        message: string;
-        code: null | number;
-      };
-    };
-  }
-
-  export interface Work {
-    id: number;
-    title: string;
-    caption: string;
-    create_date: date;
-    user: User;
-    page_count: number;
-    tags: Array<{ name: string; }>;
-
-    image_urls: {
-      square_medium: string;
-      medium: string;
-      large: string;
-    };
-
-    restrict: number;
-    visible: boolean;
-
-    total_bookmarks?: number;
-    total_views?: number;
-    total_comments?: number;
-
-    is_muted: boolean;
-    is_bookmarked: boolean;
-  }
-
-
-  export type Illust = SingleIllust | MultiIllust;
-
-  export enum SexualContent { SafeForWork = 2, Sexual = 4, Grotesque = 6 }
-
-  export interface BaseIllust extends Work {
-    type: "illust" | "manga" | "ugoira";
-    tools: Array<string>;
-    width: number;
-    height: number;
-    sanity_level: SexualContent;
-  }
-
-  // To make Illust type-safe we consider illusts with only one page
-  // and illusts with multiple as different types.
-  // (this didn't even work LOL)
-  export interface SingleIllust extends BaseIllust {
-    meta_single_page: { original_image_url: string; };
-    meta_pages: null;
-  }
-
-
-  export interface MultiIllustUrls {
-    image_urls: {
-      square_medium: string;
-      medium: string;
-      large: string;
-      original: string;
-    };
-  }
-
-
-  export interface MultiIllust extends BaseIllust {
-    meta_single_page: { original_image_url: undefined };
-    meta_pages: Array<MultiIllustUrls>;
-  }
-
-
-  export interface Novel extends Work {
-    text_length: number;
-    series: {
-      id: number;
-      title: string;
-    };
-  }
-
-
-  export type url = string;
-  export type maybeString = "" | string;
-  export type maybeNumber = 0 | number;
-  export type date = string;
-  export type publicity = "public" | "private";
-
-
-  export interface User {
-    id: number;
-    name: string;
-    account: string;
-    profile_image_urls: { medium: url; };
-    comment?: string;
-    is_followed?: boolean;
-  }
-
-
-  export interface UserDetail {
-    user: User;
-
-    profile: {
-      webpage: url | null;
-
-      gender: maybeString;
-
-      birth_day: maybeString;
-      birth_year: maybeNumber;
-
-      region: maybeString;
-      address_id: maybeNumber;
-      country_code: maybeString;
-
-      job: maybeString;
-      job_id: maybeNumber;
-
-      background_image_url: url | null;
-      twitter_account: maybeString;
-      twitter_url: url | null;
-      pawoo_url: url | null;
-      is_premium: boolean;
-      is_using_custom_profile_image: boolean;
-
-      total_follow_users: number;
-      total_follower: number;
-      total_mypixiv_users: number;
-
-      total_illusts: number;
-      total_manga: number;
-      total_novels: number;
-      total_illust_bookmarks_public: number;
-    };
-
-    profile_publicity: {
-      gender: publicity;
-      region: publicity;
-      birth_day: publicity;
-      birth_year: publicity;
-      job: publicity;
-      pawoo: boolean;
-    };
-
-    workspace: {
-      pc: maybeString;
-      monitor: maybeString;
-      tool: maybeString;
-      scanner: maybeString;
-      tablet: maybeString;
-      mouse: maybeString;
-      printer: maybeString;
-      desktop: maybeString;
-      music: maybeString;
-      desk: maybeString;
-      chair: maybeString;
-      comment: maybeString;
-      workspace_image_url: url | null;
-    };
-  }
-
-
-  export interface Comment {
-    id: number;
-    comment: string;
-    date: date;
-    user: User;
-  }
-
-
-  export interface CommentList {
-    total_comments?: number;
-    next_url: url | null;
-    comments: Array<Comment>;
-  }
-
-
-  export interface UgoiraDetail {
-    ugoira_metadata: {
-      zip_urls: { medium: url; }
-      frames: Array<{
-        file: string;
-        delay: number;
-      }>;
-    };
-  }
-
-
-  export interface TrendingTags {
-    trend_tags: Array<{
-      tag: string;
-      illust: Illust;
-    }>;
-  }
-
-
-  export interface Paged {
-    next_url: url | null;
-  }
-
-
-  export interface IllustList extends Paged {
-    illusts: Array<Illust>;
-  }
-
-
-  export interface IllustDetail {
-    illust: Illust;
-  }
-
-
-  export interface UserPreviews extends Paged {
-    user_previews: Array<{
-      user: User;
-      illusts: Array<Illust>;
-      novels: Array<Novel>;
-      is_muted: boolean;
-    }>;
-  }
-
-
-  export interface TrendingTags {
-    trend_tags: Array<{
-      tag: string;
-      illust: Illust;
-    }>;
-  }
-
-}
-
-
-namespace to {
-  /*
-  export const MyInfo = (r: raw.Login): t.MyInfo => {
+namespace To {
+  export const myInfo = (r: Raw.Login): MyInfo => {
     const user = r.response.user;
     return {
       name: user.account,
       nick: user.name,
       id: parseInt(user.id),
-      email: user.main_address,
+      email: user.mail_address,
       avatar: {
         big: user.profile_image_urls.px_170x170,
         medium: user.profile_image_urls.px_50x50,
@@ -746,9 +582,8 @@ namespace to {
       }
     };
   };
-  */
 
-  export const User = (u: raw.User): User => {
+  export const user = (u: Raw.User): User => {
     return {
       id: u.id,
       accountName: u.account,
@@ -759,14 +594,13 @@ namespace to {
     };
   };
 
-  export const Work = (w: raw.Work): Work => {
+  export const work = (w: Raw.Work): Work => {
     return {
       id: w.id,
       title: w.title,
       caption: w.caption,
       date: new Date(w.create_date),
-      user: User(w.user),
-      //userId: w.user.id,
+      user: user(w.user),
       pages: w.page_count,
       tags: w.tags.map(x => x.name),
       thumbnail: w.image_urls.square_medium,
@@ -774,8 +608,8 @@ namespace to {
     };
   };
 
-  export const Illust = (i: raw.Illust): Illust => {
-    let illust = Work(i) as Illust;
+  export const illust = (i: Raw.Illust): Illust => {
+    let illust = work(i) as Illust;
     illust.tools = i.tools;
     illust.dimensions = [i.width, i.height];
     illust.type = i.type;
@@ -783,22 +617,21 @@ namespace to {
     if (i.meta_single_page.original_image_url) {
       illust.images = [i.meta_single_page.original_image_url];
     } else {
-      const multiUrls = i.meta_pages!;
-      illust.images = multiUrls.map(x => x.image_urls.original);
+      illust.images = i.meta_pages!.map(x => x.image_urls.original);
     }
 
-    illust.sexualContent = i.sanity_level / 2;
+    illust.sexualContent = (i.sanity_level / 2) - 1;
 
     return illust;
   };
+
+  export const novel = (n: Raw.Novel): Novel => {
+    let novel = work(n) as Novel;
+    novel.length = n.text_length;
+    novel.series = n.series;
+    return novel;
+  };
 }
-
-
-
-
-
-
-
 
 
 export interface MyInfo {
@@ -831,7 +664,6 @@ export interface Work {
   caption: string;
   date: Date;
   user: User;
-  //userId: number;
   pages: number;
   tags: Array<string>;
   thumbnail: string;
@@ -848,7 +680,7 @@ export interface Unimplemented {}
 export type IllustType = "illust" | "manga" | "ugoira";
 
 
-export enum SexualContent { None = 1, Sexual, Grotesque }
+export enum SexualContent { None, Sexual, Grotesque }
 
 
 export enum Restrict { Public, Private }
@@ -860,4 +692,13 @@ export interface Illust extends Work {
   images: Array<string>;
   dimensions: [number, number];
   sexualContent: SexualContent;
+}
+
+
+export interface Novel extends Work {
+  length: number;
+  series: {
+    id: number;
+    title: string;
+  };
 }

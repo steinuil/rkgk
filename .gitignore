@@ -1,7 +1,6 @@
 node_modules
-_cache
-dist
+_*
+.*
+!.gitignore
 yarn.lock
-var
-elm
-old
+yarn-error.log
