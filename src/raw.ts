@@ -167,7 +167,7 @@ export interface Article {
   publish_date: date_time;
   article_url: string;
   thumbnail: string;
-  category: "inspiration" | "spotlight" | string;
+  category: "inspiration" | "spotlight" | "manga" | string;
   subcategory_label: "Recommend" | "Illustration" | string;
 }
 
