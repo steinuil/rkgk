@@ -139,7 +139,7 @@ export interface Comment {
 export interface Live {
   channel_id: string;
   created_at: date_time;
-  id: string;
+  id: string; // stringified int
   is_adult: boolean;
   is_closed: boolean;
   is_enabled_mic_input: boolean;

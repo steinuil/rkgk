@@ -1,7 +1,7 @@
 import * as Raw from "./raw";
 
 
-export interface Api {
+export interface IApi {
   // Reset credentials to a username and password in case
   // an InvalidCredentials error is thrown.
   setCredentials(username: string, password: string): void;
@@ -12,14 +12,6 @@ export interface Api {
     offset?: number
   }): Promise<Paged<Illust[]>>;
 
-  // Latest illustrations globally.
-  globalFeed(opts?: {
-    type?: "illust" | "manga",
-    offset?: number
-  }): Promise<Paged<Illust[]>>;
-
-  myPixivFeed(o?: { offset?: number }): Promise<Paged<Illust[]>>;
-
   // Latest novels by the users you follow.
   myNovelFeed(opts?:{
     restrict?: "public" | "private" | "all",
@@ -27,11 +19,38 @@ export interface Api {
   }): Promise<Paged<Novel[]>>;
 
   // Latest illustrations globally.
+  globalFeed(opts?: {
+    type?: "illust" | "manga",
+    offset?: number
+  }): Promise<Paged<Illust[]>>;
+
+  // Latest novels globally.
   globalNovelFeed(opts?: {
     offset?: number
   }): Promise<Paged<Novel[]>>;
 
+  // Latest illustrations and manga by your MyPixiv users
+  myPixivFeed(o?: { offset?: number }): Promise<Paged<Illust[]>>;
+
+  // Latest novels by your MyPixiv users
   myPixivNovelFeed(o?: { offset?: number }): Promise<Paged<Novel[]>>;
+
+  // Live feeds by users you follow
+  myLiveFeed(opts?: {
+    offset?: number
+  }): Promise<Paged<Live[]>>;
+
+  /*
+  myIllustBookmarks(opts?: {
+    restrict?: "public" | "private",
+    lastBookmark?: number
+  }): Promise<Paged<Illust[]>>;
+
+  myNovelBookmarks(opts?: {
+    restrict?: "public" | "private",
+    lastBookmark?: number
+  }): Promise<Paged<Novel[]>>;
+  */
 
   // Search for illustrations and manga matching a given query.
   searchIllusts(query: string, opts?: {
@@ -67,7 +86,7 @@ export interface Api {
   // Tag completions for a given search query.
   autoComplete(query: string): Promise<string[]>;
 
-  // Recommendations based on an illustration.
+  // Recommendations based on a seed illustration.
   relatedIllusts(
     startId: number,
     prev?: Array<number>
@@ -76,7 +95,54 @@ export interface Api {
   // Recommended users based on a seed user.
   relatedUsers(id: number): Promise<UserPreview[]>;
 
-  // Bookmark an illustration or a manga.
+  // List of popular live feeds.
+  popularLiveFeeds(opts?: {
+    offset?: number
+  }): Promise<Paged<Live[]>>;
+
+  // Popular tags with a sample illustration.
+  trendingTags(): Promise<Array<[string, Illust]>>;
+
+  // Popular illustrations.
+  rankingIllusts(opts?: {
+    mode?: "day" | "day_female" | "day_male"
+      | "month" | "week" | "week_original" | "week_rookie",
+    date?: Date,
+    offset?: number
+  }): Promise<Paged<Illust[]>>;
+
+  rankingManga(opts?: {
+    mode?: "day" | "month" | "week" | "week_rookie",
+    date?: Date,
+    offset?: number
+  }): Promise<Paged<Illust[]>>;
+
+  rankingNovels(opts?: {
+    mode?: "day" | "day_female" | "day_male" | "week" | "week_rookie",
+    date?: Date,
+    offset?: number
+  }): Promise<Paged<Novel[]>>;
+
+  // Works by a given user.
+  userIllusts(user: number, opts?: {
+    type?: "illust" | "manga",
+    offset?: number
+  }): Promise<Paged<Illust[]>>;
+
+  userNovels(user: number, opts?: {
+    offset?: number
+  }): Promise<Paged<Novel[]>>;
+
+  // Public bookmarks by a given user.
+  userIllustBookmarks(user: number, opts?: {
+    lastBookmark?: number
+  }): Promise<Paged<Illust[]>>;
+
+  userNovelBookmarks(user: number, opts?: {
+    lastBookmark?: number
+  }): Promise<Paged<Novel[]>>;
+
+  // Bookmark or unbookmark an illustration or a manga.
   bookmarkIllust(id: number, opts?: {
     restrict?: "public" | "private",
     tags?: string[]
@@ -84,7 +150,7 @@ export interface Api {
 
   unbookmarkIllust(id: number): Promise<void>;
 
-  // Bookmark a novel.
+  // Bookmark or unbookmark a novel.
   bookmarkNovel(id: number, opts?: {
     restrict?: "public" | "private",
     tags?: string[]
@@ -92,40 +158,18 @@ export interface Api {
 
   unbookmarkNovel(id: number): Promise<void>;
 
-  // Follor a user.
+  // Follow or unfollow a user.
   follow(id: number, opts?: {
     restrict?: "public" | "private",
   }): Promise<void>;
 
   unfollow(id: number): Promise<void>;
-
-  // Users that are currently livestreaming.
-  // @stub
-  live(opts?: {
-    type?: "following" | "popular",
-    offset?: number
-  }): Promise<Paged<{}[]> | null>;
-
-  // Popular illustrations.
-  ranking(opts?: {
-    date?: Date,
-    offset?: number
-  }): Promise<Paged<Illust[]> | null>;
-
-  userDetail(id: number): Promise<User>;
-
-  illustInfo(id: number): Promise<Illust>;
-
-  userIllusts(id: number, opts: {
-    contentType?: "illust" | "manga",
-    type?: "illust" | "manga" | "novel",
-  }): Promise<Paged<Array<Illust>>>;
 }
 
 
 // The only instance in which this class throws an error is when
 // The username and password are invalid.
-export class Api {
+export class Api implements IApi {
   private creds: Credentials.t;
   private domains: Domains;
 
@@ -329,44 +373,6 @@ export class Api {
   }
 
 
-  globalFeed = (opts: {
-    type?: "illust" | "manga",
-    offset?: number
-  } = {}): Promise<Paged<Array<Illust>>> => {
-    const unpack = (resp: Raw.IllustList): Paged<Illust[]> => [
-      resp.illusts.map(i => To.illust(i)),
-      this.nextPage(resp.next_url, unpack)
-    ];
-
-    return this.apiReq({
-      method: "GET",
-      url: "v1/illust/new",
-      params: [
-        ["content_type", opts.type || "illust"],
-        ["offset", opts.offset]
-      ],
-      unpack
-    });
-  }
-
-
-  myPixivFeed = (opts: {
-    offset?: number
-  } = {}): Promise<Paged<Illust[]>> => {
-    const unpack = (resp: Raw.IllustList): Paged<Illust[]> => [
-      resp.illusts.map(i => To.illust(i)),
-      this.nextPage(resp.next_url, unpack)
-    ];
-
-    return this.apiReq({
-      method: "GET",
-      url: "v2/illust/mypixiv",
-      params: [["offset", opts.offset]],
-      unpack
-    });
-  }
-
-
   myNovelFeed = (opts: {
     restrict?: "public" | "private" | "all",
     offset?: number
@@ -381,6 +387,27 @@ export class Api {
       url: "v1/novel/follow",
       params: [
         ["restrict", opts.restrict || "all"],
+        ["offset", opts.offset]
+      ],
+      unpack
+    });
+  }
+
+
+  globalFeed = (opts: {
+    type?: "illust" | "manga",
+    offset?: number
+  } = {}): Promise<Paged<Array<Illust>>> => {
+    const unpack = (resp: Raw.IllustList): Paged<Illust[]> => [
+      resp.illusts.map(i => To.illust(i)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/illust/new",
+      params: [
+        ["content_type", opts.type || "illust"],
         ["offset", opts.offset]
       ],
       unpack
@@ -405,6 +432,23 @@ export class Api {
   }
 
 
+  myPixivFeed = (opts: {
+    offset?: number
+  } = {}): Promise<Paged<Illust[]>> => {
+    const unpack = (resp: Raw.IllustList): Paged<Illust[]> => [
+      resp.illusts.map(i => To.illust(i)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v2/illust/mypixiv",
+      params: [["offset", opts.offset]],
+      unpack
+    });
+  }
+
+
   myPixivNovelFeed = (opts: {
     offset?: number
   } = {}): Promise<Paged<Novel[]>> => {
@@ -420,6 +464,72 @@ export class Api {
       unpack
     });
   }
+
+
+  myLiveFeed = (opts: {
+    offset?: number
+  } = {}): Promise<Paged<Live[]>> => {
+    const unpack = (resp: Raw.LiveList): Paged<Live[]> => [
+      resp.lives.map(l => To.live(l)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/live/list",
+      params: [
+        ["list_type", "following"],
+        ["offset", opts.offset]
+      ],
+      unpack
+    });
+  }
+
+
+  /*
+  myIllustBookmarks = (opts: {
+    restrict?: "public" | "private",
+    lastBookmark?: number
+  } = {}): Promise<Paged<Illust[]>> => {
+    const unpack = (resp: Raw.IllustList): Paged<Illust[]> => [
+      resp.illusts.map(i => To.illust(i)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/user/bookmarks/illust",
+      params: [
+        ["user_id", this.info.id],
+        ["restrict", opts.restrict || "public"],
+        ["max_bookmark_id", opts.lastBookmark]
+      ],
+      unpack
+    });
+  }
+
+
+  myNovelBookmarks = (opts: {
+    restrict?: "public" | "private",
+    lastBookmark?: number
+  } = {}): Promise<Paged<Novel[]>> => {
+    const unpack = (resp: Raw.NovelList): Paged<Novel[]> => [
+      resp.novels.map(n => To.novel(n)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/user/bookmarks/novel",
+      params: [
+        ["user_id", this.info.id],
+        ["restrict", opts.restrict || "public"],
+        ["max_bookmark_id", opts.lastBookmark]
+      ],
+      unpack
+    });
+  }
+  */
 
 
   // --------------------------------------------------------------------------
@@ -597,6 +707,195 @@ export class Api {
       url: "v1/user/related",
       params: [
         ["seed_user_id", id]
+      ],
+      unpack
+    });
+  }
+
+
+  popularLiveFeeds = (opts: {
+    offset?: number
+  } = {}): Promise<Paged<Live[]>> => {
+    const unpack = (resp: Raw.LiveList): Paged<Live[]> => [
+      resp.lives.map(l => To.live(l)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/live/list",
+      params: [
+        ["list_type", "popular"],
+        ["offset", opts.offset]
+      ],
+      unpack
+    });
+  }
+
+
+  trendingTags = (): Promise<Array<[string, Illust]>> => {
+    const unpack = (resp: Raw.TrendingTags): Array<[string, Illust]> =>
+      resp.trend_tags.map((t): [string, Illust] => [t.tag, To.illust(t.illust)]);
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/trending-tags/illust",
+      params: [],
+      unpack
+    });
+  }
+
+
+  rankingIllusts = (opts: {
+    mode?: "day" | "day_female" | "day_male"
+      | "month" | "week" | "week_original" | "week_rookie",
+    date?: Date,
+    offset?: number
+  } = {}): Promise<Paged<Illust[]>> => {
+    const unpack = (resp: Raw.IllustList): Paged<Illust[]> => [
+      resp.illusts.map(i => To.illust(i)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/illust/ranking",
+      params: [
+        ["mode", opts.mode || "day"],
+        ["date", opts.date],
+        ["offset", opts.offset]
+      ],
+      unpack
+    });
+  }
+
+
+  rankingManga = (opts: {
+    mode?: "day" | "month" | "week" | "week_rookie",
+    date?: Date,
+    offset?: number
+  } = {}): Promise<Paged<Illust[]>> => {
+    const unpack = (resp: Raw.IllustList): Paged<Illust[]> => [
+      resp.illusts.map(i => To.illust(i)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/illust/ranking",
+      params: [
+        ["mode", (opts.mode || "day") + "_manga"],
+        ["date", opts.date],
+        ["offset", opts.offset]
+      ],
+      unpack
+    });
+  }
+
+
+  rankingNovels = (opts: {
+    mode?: "day" | "day_female" | "day_male" | "week" | "week_rookie",
+    date?: Date,
+    offset?: number
+  } = {}): Promise<Paged<Novel[]>> => {
+    const unpack = (resp: Raw.NovelList): Paged<Novel[]> => [
+      resp.novels.map(n => To.novel(n)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/novel/ranking",
+      params: [
+        ["mode", opts.mode || "day"],
+        ["date", opts.date],
+        ["offset", opts.offset]
+      ],
+      unpack
+    });
+  }
+
+
+  // --------------------------------------------------------------------------
+  userIllusts = (user: number, opts: {
+    type?: "illust" | "manga",
+    offset?: number
+  } = {}): Promise<Paged<Illust[]>> => {
+    const unpack = (resp: Raw.IllustList): Paged<Illust[]> => [
+      resp.illusts.map(i => To.illust(i)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/user/illusts",
+      params: [
+        ["user_id", user],
+        ["type", opts.type || "illust"],
+        ["offset", opts.offset]
+      ],
+      unpack
+    });
+  }
+
+
+  userNovels = (user: number, opts: {
+    offset?: number
+  } = {}): Promise<Paged<Novel[]>> => {
+    const unpack = (resp: Raw.NovelList): Paged<Novel[]> => [
+      resp.novels.map(i => To.novel(i)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/user/illusts",
+      params: [
+        ["user_id", user],
+        ["type", "novel"],
+        ["offset", opts.offset]
+      ],
+      unpack
+    });
+  }
+
+
+  userIllustBookmarks = (id: number, opts: {
+    lastBookmark?: number
+  } = {}): Promise<Paged<Illust[]>> => {
+    const unpack = (resp: Raw.IllustList): Paged<Illust[]> => [
+      resp.illusts.map(i => To.illust(i)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/user/bookmarks/illust",
+      params: [
+        ["user_id", id],
+        ["restrict", "public"],
+        ["max_bookmark_id", opts.lastBookmark]
+      ],
+      unpack
+    });
+  }
+
+
+  userNovelBookmarks = (id: number, opts: {
+    lastBookmark?: number
+  } = {}): Promise<Paged<Novel[]>> => {
+    const unpack = (resp: Raw.NovelList): Paged<Novel[]> => [
+      resp.novels.map(n => To.novel(n)),
+      this.nextPage(resp.next_url, unpack)
+    ];
+
+    return this.apiReq({
+      method: "GET",
+      url: "v1/user/bookmarks/novel",
+      params: [
+        ["user_id", id],
+        ["restrict", "public"],
+        ["max_bookmark_id", opts.lastBookmark]
       ],
       unpack
     });
@@ -784,30 +1083,26 @@ namespace To {
     };
   };
 
-  export const user = (u: Raw.User): User => {
-    return {
-      id: u.id,
-      accountName: u.account,
-      displayName: u.name,
-      avatar: u.profile_image_urls.medium,
-      description: u.comment || null,
-      followed: u.is_followed || null
-    };
-  };
+  export const user = (u: Raw.User): User => ({
+    id: u.id,
+    accountName: u.account,
+    displayName: u.name,
+    avatar: u.profile_image_urls.medium,
+    description: u.comment || null,
+    followed: u.is_followed || null
+  });
 
-  export const work = (w: Raw.Work): Work => {
-    return {
-      id: w.id,
-      title: w.title,
-      caption: w.caption,
-      date: new Date(w.create_date),
-      user: user(w.user),
-      pages: w.page_count,
-      tags: w.tags.map(x => x.name),
-      thumbnail: w.image_urls.square_medium,
-      bookmarked: w.is_bookmarked
-    };
-  };
+  export const work = (w: Raw.Work): Work => ({
+    id: w.id,
+    title: w.title,
+    caption: w.caption,
+    date: new Date(w.create_date),
+    user: user(w.user),
+    pages: w.page_count,
+    tags: w.tags.map(x => x.name),
+    thumbnail: w.image_urls.square_medium,
+    bookmarked: w.is_bookmarked
+  });
 
   export const illust = (i: Raw.Illust): Illust => {
     let illust = work(i) as Illust;
@@ -833,14 +1128,35 @@ namespace To {
     return novel;
   };
 
-  export const userPreview = (u: Raw.UserPreview): UserPreview => {
-    return {
-      user: user(u.user),
-      illusts: u.illusts.map(i => illust(i)),
-      novels: u.novels.map(n => novel(n)),
-      muted: u.is_muted
-    };
-  };
+  export const userPreview = (u: Raw.UserPreview): UserPreview => ({
+    user: user(u.user),
+    illusts: u.illusts.map(i => illust(i)),
+    novels: u.novels.map(n => novel(n)),
+    muted: u.is_muted
+  });
+
+
+  export const live = (l: Raw.Live): Live => ({
+    id: parseInt(l.id),
+    channelId: l.channel_id,
+    name: l.name,
+    owner: user(l.owner.user),
+    performers: l.performers.map(i => user(i.user)),
+    performerCount: l.performer_count,
+    created: new Date(l.created_at),
+    closed: l.is_closed,
+    micEnabled: l.is_enabled_mic_input,
+    muted: l.is_muted,
+    r15: l.is_r15,
+    r18: l.is_r18,
+    adult: l.is_adult,
+    single: l.is_single,
+    members: l.member_count,
+    viewers: l.total_audience_count,
+    mode: l.mode,
+    server: l.server,
+    thumbnail: l.thumbnail_image_url
+  });
 }
 
 
@@ -885,14 +1201,13 @@ export interface Work {
   pages: number;
   tags: Array<string>;
   thumbnail: string;
-/*bookmarks: number | null;
+  /*
+  bookmarks: number | null;
   views: number | null;
-  commentCount: number | null;*/
+  commentCount: number | null;
+  */
   bookmarked: boolean;
 }
-
-
-export type IllustType = "illust" | "manga" | "ugoira";
 
 
 export enum SexualContent { None, Sexual, Grotesque }
@@ -902,7 +1217,7 @@ export enum Restrict { Public, Private }
 
 
 export interface Illust extends Work {
-  type: IllustType;
+  type: "illust" | "manga" | "ugoira";
   tools: Array<string>;
   images: Array<string>;
   dimensions: [number, number];
@@ -916,4 +1231,27 @@ export interface Novel extends Work {
     id: number;
     title: string;
   };
+}
+
+
+export interface Live {
+  id: number;
+  channelId: string;
+  name: string;
+  owner: User;
+  performers: Array<User>;
+  performerCount: number;
+  created: Date;
+  closed: boolean;
+  micEnabled: boolean;
+  muted: boolean;
+  r15: boolean;
+  r18: boolean;
+  adult: boolean;
+  single: boolean;
+  members: number;
+  viewers: number;
+  mode: "screencast" | "webcam";
+  server: string;
+  thumbnail: string;
 }
