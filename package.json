@@ -7,7 +7,7 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
-    "typescript": "^2.7.2"
+    "typescript": "^3.2.2"
   },
   "optionalDependencies": {
     "tslint": "^5.9.1"

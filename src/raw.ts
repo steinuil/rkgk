@@ -1,6 +1,5 @@
 // Interfaces to the raw server responses.
 
-
 // Authentication response
 export interface Login {
   response: {
@@ -8,8 +7,8 @@ export interface Login {
     refresh_token: string;
     access_token: string;
     expires_in: number;
-    token_type: "bearer";
-    scope: "";
+    token_type: 'bearer';
+    scope: '';
     user: {
       id: string; // stringified int
       name: string;
@@ -22,11 +21,10 @@ export interface Login {
         px_16x16: string;
         px_50x50: string;
         px_170x170: string;
-      }
+      };
     };
   };
 }
-
 
 export interface AuthError {
   has_error: true;
@@ -38,7 +36,6 @@ export interface AuthError {
   };
 }
 
-
 export interface ApiError {
   error: {
     user_message: string;
@@ -48,31 +45,27 @@ export interface ApiError {
   };
 }
 
-
 // Utility types
 export type date = string;
 export type date_time = string;
 
 export enum SexualContent {
   SafeForWork = 2,
-  Sexual      = 4,
-  Grotesque   = 6,
+  Sexual = 4,
+  Grotesque = 6,
 }
 
-
 export interface XXX {}
-
 
 // Base types
 export interface User {
   id: number;
   name: string;
   account: string;
-  profile_image_urls: { medium: string; };
+  profile_image_urls: { medium: string };
   comment?: string;
   is_followed?: boolean;
 }
-
 
 export interface Work {
   id: number;
@@ -81,7 +74,7 @@ export interface Work {
   create_date: date;
   user: User;
   page_count: number;
-  tags: Array<{ name: string; }>;
+  tags: Array<{ name: string }>;
 
   image_urls: {
     square_medium: string;
@@ -100,14 +93,13 @@ export interface Work {
   is_bookmarked: boolean;
 }
 
-
 export interface Illust extends Work {
-  type: "illust" | "manga" | "ugoira";
+  type: 'illust' | 'manga' | 'ugoira';
   tools: Array<string>;
   width: number;
   height: number;
   sanity_level: SexualContent;
-  meta_single_page: { original_image_url?: string; };
+  meta_single_page: { original_image_url?: string };
   meta_pages: Array<{
     image_urls: {
       square_medium: string;
@@ -118,7 +110,6 @@ export interface Illust extends Work {
   }> | null;
 }
 
-
 export interface Novel extends Work {
   text_length: number;
   series: {
@@ -127,14 +118,12 @@ export interface Novel extends Work {
   };
 }
 
-
 export interface Comment {
   id: number;
   comment: string;
   date: date;
   user: User;
 }
-
 
 export interface Live {
   channel_id: string;
@@ -148,17 +137,16 @@ export interface Live {
   is_r18: boolean;
   is_single: boolean;
   member_count: number;
-  mode: "screencast" | "webcam";
+  mode: 'screencast' | 'webcam';
   name: string;
-  owner: { user: User; };
+  owner: { user: User };
   performer_count: number;
-  performers: Array<{ user: User; }>;
-  publicity: "open" | "closed";
+  performers: Array<{ user: User }>;
+  publicity: 'open' | 'closed';
   server: string;
   thumbnail_image_url: string;
   total_audience_count: number;
 }
-
 
 export interface Article {
   id: number;
@@ -167,10 +155,9 @@ export interface Article {
   publish_date: date_time;
   article_url: string;
   thumbnail: string;
-  category: "inspiration" | "spotlight" | "manga" | string;
-  subcategory_label: "Recommend" | "Illustration" | string;
+  category: 'inspiration' | 'spotlight' | 'manga' | string;
+  subcategory_label: 'Recommend' | 'Illustration' | string;
 }
-
 
 export interface UserPreview {
   user: User;
@@ -179,33 +166,27 @@ export interface UserPreview {
   is_muted: boolean;
 }
 
-
 // List pages
 export interface Paged {
   next_url: string | null;
 }
 
-
 export interface IllustList extends Paged {
   illusts: Array<Illust>;
 }
-
 
 export interface NovelList extends Paged {
   novels: Array<Novel>;
 }
 
-
 export interface UserPreviews extends Paged {
   user_previews: Array<UserPreview>;
 }
-
 
 export interface CommentList extends Paged {
   total_comments?: number;
   comments: Array<Comment>;
 }
-
 
 export interface NovelMarkers extends Paged {
   marked_novels: Array<{
@@ -216,17 +197,14 @@ export interface NovelMarkers extends Paged {
   }>;
 }
 
-
 export interface LiveList extends Paged {
   lives: Array<Live>;
   live_info: null;
 }
 
-
 export interface SpotlightArticles extends Paged {
   spotlight_articles: Array<Article>;
 }
-
 
 // Other pages
 export interface TrendingTags {
@@ -236,18 +214,15 @@ export interface TrendingTags {
   }>;
 }
 
-
 export interface PopularIllusts {
   illusts: Array<Illust>;
   search_span_limit: number;
 }
 
-
 export interface PopularNovels {
   novels: Array<Novel>;
   search_span_limit: number;
 }
-
 
 export interface IllustRanking {
   illusts: Array<Illust>;
@@ -255,11 +230,9 @@ export interface IllustRanking {
   ranking_illusts: Array<XXX>;
 }
 
-
 export interface IllustDetail {
   illust: Illust;
 }
-
 
 export interface NovelText {
   novel_marker: XXX;
@@ -268,10 +241,9 @@ export interface NovelText {
   series_prev: XXX;
 }
 
-
 export interface UgoiraDetail {
   ugoira_metadata: {
-    zip_urls: { medium: string; }
+    zip_urls: { medium: string };
     frames: Array<{
       file: string;
       delay: number;
@@ -279,18 +251,16 @@ export interface UgoiraDetail {
   };
 }
 
-
 export interface BookmarkDetail {
   bookmark_detail: {
     is_bookmarked: boolean;
-    restrict: "public" | "private";
+    restrict: 'public' | 'private';
     tags: Array<{
       name: string;
       is_registered: boolean;
     }>;
   };
 }
-
 
 export interface MuteList {
   mute_limit_count: number;
@@ -301,27 +271,26 @@ export interface MuteList {
   muted_users_count: number;
 }
 
-
 export interface UserDetail {
   user: User;
 
   profile: {
     webpage: string | null;
 
-    gender: "" | string;
+    gender: '' | string;
 
-    birth_day: "" | string;
+    birth_day: '' | string;
     birth_year: 0 | number;
 
-    region: "" | string;
+    region: '' | string;
     address_id: 0 | number;
-    country_code: "" | string;
+    country_code: '' | string;
 
-    job: "" | string;
+    job: '' | string;
     job_id: 0 | number;
 
     background_image_url: string | null;
-    twitter_account: "" | string;
+    twitter_account: '' | string;
     twitter_url: string | null;
     pawoo_url: string | null;
     is_premium: boolean;
@@ -338,31 +307,30 @@ export interface UserDetail {
   };
 
   profile_publicity: {
-    gender: "public" | "private";
-    region: "public" | "private";
-    birth_day: "public" | "private";
-    birth_year: "public" | "private";
-    job: "public" | "private";
+    gender: 'public' | 'private';
+    region: 'public' | 'private';
+    birth_day: 'public' | 'private';
+    birth_year: 'public' | 'private';
+    job: 'public' | 'private';
     pawoo: boolean;
   };
 
   workspace: {
-    pc: "" | string;
-    monitor: "" | string;
-    tool: "" | string;
-    scanner: "" | string;
-    tablet: "" | string;
-    mouse: "" | string;
-    printer: "" | string;
-    desktop: "" | string;
-    music: "" | string;
-    desk: "" | string;
-    chair: "" | string;
-    comment: "" | string;
+    pc: '' | string;
+    monitor: '' | string;
+    tool: '' | string;
+    scanner: '' | string;
+    tablet: '' | string;
+    mouse: '' | string;
+    printer: '' | string;
+    desktop: '' | string;
+    music: '' | string;
+    desk: '' | string;
+    chair: '' | string;
+    comment: '' | string;
     workspace_image_url: string | null;
   };
 }
-
 
 // Various other pages
 export interface ApplicationInfo {
@@ -379,62 +347,61 @@ export interface ApplicationInfo {
   };
 }
 
-
-
 export namespace Request {
   export interface LiveList {
-    url: "v1/live/list";
-    method: "GET";
+    url: 'v1/live/list';
+    method: 'GET';
 
-    list_type: "popular" | "following";
+    list_type: 'popular' | 'following';
 
     response: LiveList;
   }
 
-
   export interface IllustNew {
-    url: "v1/illust/new";
-    method: "GET";
+    url: 'v1/illust/new';
+    method: 'GET';
 
-    filter: "for_ios" | "for_android";
-    content_type: "illust" | "manga";
+    filter: 'for_ios' | 'for_android';
+    content_type: 'illust' | 'manga';
 
     response: IllustList;
   }
-
 
   export interface IllustRanking {
-    url: "v1/illust/ranking";
-    method: "GET";
+    url: 'v1/illust/ranking';
+    method: 'GET';
 
-    filter: "for_ios" | "for_android";
+    filter: 'for_ios' | 'for_android';
     mode:
-      | "day" | "day_manga" | "day_female" | "day_male"
-      | "month" | "month_manga"
-      | "week" | "week_manga" | "week_original"
-      | "week_rookie" | "week_rookie_manga";
+      | 'day'
+      | 'day_manga'
+      | 'day_female'
+      | 'day_male'
+      | 'month'
+      | 'month_manga'
+      | 'week'
+      | 'week_manga'
+      | 'week_original'
+      | 'week_rookie'
+      | 'week_rookie_manga';
     date?: date;
 
     response: IllustList;
   }
 
-
   export interface NovelRanking {
-    url: "v1/novel/ranking";
-    method: "GET";
+    url: 'v1/novel/ranking';
+    method: 'GET';
 
-    mode:
-      | "day" | "day_female" | "day_male"
-      | "week" | "week_rookie";
+    mode: 'day' | 'day_female' | 'day_male' | 'week' | 'week_rookie';
     date?: date;
   }
 
-
   export interface IllustRecommended {
-    url: "v1/illust/recommended";
-    method: "GET";
+    url: 'v1/illust/recommended';
+    method: 'GET';
 
-    filter: "for_ios" | "for_android";
+    filter: 'for_ios' | 'for_android';
     include_ranking_illusts: boolean;
     min_bookmark_id_for_recent_illust?: number;
     max_bookmark_id_for_recommend?: number;

@@ -1,24 +1,22 @@
-{ "compilerOptions":
-  { "strict": true
-  , "noImplicitReturns": true
-  , "noUnusedLocals": true
-  , "noUnusedParameters": true
-  , "forceConsistentCasingInFileNames": true
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "forceConsistentCasingInFileNames": true,
 
-  , "removeComments": true
-  , "jsx": "react"
+    "removeComments": true,
+    "jsx": "react",
 
-  , "sourceMap": true
-  , "outFile": "_build/pixiv.js"
+    "sourceMap": true,
+    "outFile": "_build/pixiv.js",
 
-  , "module": "system"
-  , "target": "es2015"
+    "module": "system",
+    "target": "es2015",
 
-  , "baseUrl": "node_modules"
-  }
+    "baseUrl": "node_modules"
+  },
 
-, "files":
-  [ "src/pixiv.ts"
-  , "src/raw.ts"
-  ]
+  "files": ["src/pixiv.ts", "src/raw.ts"]
 }
