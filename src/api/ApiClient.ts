@@ -83,7 +83,7 @@ export class ApiClient extends Client {
     }
   };
 
-  request = async <T>(opts: Options) => {
+  request = async <T>(opts: Options): Promise<T> => {
     const token = await this.refresh();
 
     const headers = new Headers();
