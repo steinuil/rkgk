@@ -2,6 +2,8 @@ node_modules
 _*
 .*
 !.gitignore
+!.prettierrc.json
 yarn.lock
 yarn-error.log
 doc
+build

@@ -10,9 +10,9 @@
     "jsx": "react",
 
     "sourceMap": true,
-    "outFile": "_build/pixiv.js",
+    "outDir": "build",
 
-    "module": "system",
+    "module": "es6",
     "target": "es2015",
 
     "baseUrl": "node_modules"
