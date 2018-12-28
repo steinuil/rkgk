@@ -4,3 +4,4 @@ _*
 !.gitignore
 yarn.lock
 yarn-error.log
+doc

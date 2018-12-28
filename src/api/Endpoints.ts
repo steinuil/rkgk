@@ -1,0 +1,578 @@
+import { Illust, Novel, Live, UserPreview, Paged } from './Items';
+import { Client } from './Client';
+import { Params } from './Params';
+import * as Raw from './Raw';
+import * as Cooked from './Cooked';
+
+// type ToEndpoints<T> = {
+//   [N in keyof T]: T[N] extends (...args: infer Args) => infer Ret
+//     ? (client: Client, ...args: Args) => Promise<Ret>
+//     : never
+// };
+
+export interface Endpoints {
+  // Latest manga and illustrations by the users you follow.
+  myFeed(opts?: {
+    restrict?: 'public' | 'private' | 'all';
+    offset?: number;
+  }): Paged<Illust[]>;
+
+  // Latest novels by the users you follow.
+  myNovelFeed(opts?: {
+    restrict?: 'public' | 'private' | 'all';
+    offset?: number;
+  }): Paged<Novel[]>;
+
+  // Latest illustrations globally.
+  globalFeed(opts?: {
+    type?: 'illust' | 'manga';
+    offset?: number;
+  }): Paged<Illust[]>;
+
+  // Latest novels globally.
+  globalNovelFeed(opts?: { offset?: number }): Paged<Novel[]>;
+
+  // Latest illustrations and manga by your MyPixiv users
+  myPixivFeed(o?: { offset?: number }): Paged<Illust[]>;
+
+  // Latest novels by your MyPixiv users
+  myPixivNovelFeed(o?: { offset?: number }): Paged<Novel[]>;
+
+  // Live feeds by users you follow
+  myLiveFeed(opts?: { offset?: number }): Paged<Live[]>;
+
+  /*
+  myIllustBookmarks(opts?: {
+    restrict?: "public" | "private",
+    lastBookmark?: number
+  }): Promise<Paged<Illust[]>>;
+
+  myNovelBookmarks(opts?: {
+    restrict?: "public" | "private",
+    lastBookmark?: number
+  }): Promise<Paged<Novel[]>>;
+  */
+
+  // Search for illustrations and manga matching a given query.
+  searchIllusts(
+    query: string,
+    opts?: {
+      match?:
+        | 'partial_match_for_tags'
+        | 'exact_match_for_tags'
+        | 'title_and_caption';
+      within?:
+        | 'within_last_day'
+        | 'within_last_week'
+        | 'within_last_month'
+        | [Date, Date];
+      sortMode?: 'date_desc' | 'date_asc';
+      offset?: number;
+    }
+  ): Paged<Illust[]>;
+
+  // Search for novels matching a given query.
+  searchNovels(
+    query: string,
+    opts?: {
+      match?:
+        | 'partial_match_for_tags'
+        | 'exact_match_for_tags'
+        | 'title_and_caption';
+      within?:
+        | 'within_last_day'
+        | 'within_last_week'
+        | 'within_last_month'
+        | [Date, Date];
+      sortMode?: 'date_desc' | 'date_asc';
+      offset?: number;
+    }
+  ): Paged<Novel[]>;
+
+  // Search for users.
+  searchUsers(
+    query: string,
+    opts?: {
+      offset?: number;
+    }
+  ): Paged<UserPreview[]>;
+
+  // Most popular illustrations and manga for a given query.
+  searchPopularIllusts(
+    query: string,
+    opts?: {
+      match?:
+        | 'partial_match_for_tags'
+        | 'exact_match_for_tags'
+        | 'title_and_caption';
+    }
+  ): Illust[];
+
+  // Most popular novels for a given query.
+  searchPopularNovels(
+    query: string,
+    opts?: {
+      match?:
+        | 'partial_match_for_tags'
+        | 'exact_match_for_tags'
+        | 'title_and_caption';
+    }
+  ): Novel[];
+
+  // Tag completions for a given search query.
+  autoComplete(query: string): string[];
+
+  // Recommendations based on a seed illustration.
+  relatedIllusts(startId: number, prev?: Array<number>): Paged<Illust[]>;
+
+  // Recommended users based on a seed user.
+  relatedUsers(id: number): UserPreview[];
+
+  // List of popular live feeds.
+  popularLiveFeeds(opts?: { offset?: number }): Paged<Live[]>;
+
+  // Popular tags with a sample illustration.
+  trendingTags(): Array<[string, Illust]>;
+
+  // Popular illustrations.
+  rankingIllusts(opts?: {
+    mode?:
+      | 'day'
+      | 'day_female'
+      | 'day_male'
+      | 'month'
+      | 'week'
+      | 'week_original'
+      | 'week_rookie';
+    date?: Date;
+    offset?: number;
+  }): Paged<Illust[]>;
+
+  rankingManga(opts?: {
+    mode?: 'day' | 'month' | 'week' | 'week_rookie';
+    date?: Date;
+    offset?: number;
+  }): Paged<Illust[]>;
+
+  rankingNovels(opts?: {
+    mode?: 'day' | 'day_female' | 'day_male' | 'week' | 'week_rookie';
+    date?: Date;
+    offset?: number;
+  }): Paged<Novel[]>;
+
+  // Works by a given user.
+  userIllusts(
+    user: number,
+    opts?: {
+      type?: 'illust' | 'manga';
+      offset?: number;
+    }
+  ): Paged<Illust[]>;
+
+  userNovels(
+    user: number,
+    opts?: {
+      offset?: number;
+    }
+  ): Paged<Novel[]>;
+
+  // Public bookmarks by a given user.
+  userIllustBookmarks(
+    user: number,
+    opts?: {
+      lastBookmark?: number;
+    }
+  ): Paged<Illust[]>;
+
+  userNovelBookmarks(
+    user: number,
+    opts?: {
+      lastBookmark?: number;
+    }
+  ): Paged<Novel[]>;
+
+  // Bookmark or unbookmark an illustration or a manga.
+  bookmarkIllust(
+    id: number,
+    opts?: {
+      restrict?: 'public' | 'private';
+      tags?: string[];
+    }
+  ): void;
+
+  unbookmarkIllust(id: number): void;
+
+  // Bookmark or unbookmark a novel.
+  bookmarkNovel(
+    id: number,
+    opts?: {
+      restrict?: 'public' | 'private';
+      tags?: string[];
+    }
+  ): void;
+
+  unbookmarkNovel(id: number): void;
+
+  // Follow or unfollow a user.
+  follow(
+    id: number,
+    opts?: {
+      restrict?: 'public' | 'private';
+    }
+  ): void;
+
+  unfollow(id: number): void;
+}
+
+namespace Unpack {
+  export const illustList = (resp: Raw.IllustList): Paged<Illust[]> => ({
+    curr: resp.illusts.map(Cooked.illust),
+    nextPage: null,
+  });
+
+  export const novelList = (resp: Raw.NovelList): Paged<Novel[]> => ({
+    curr: resp.novels.map(Cooked.novel),
+    nextPage: null,
+  });
+
+  export const liveList = (resp: Raw.LiveList): Paged<Live[]> => ({
+    curr: resp.lives.map(Cooked.live),
+    nextPage: null,
+  });
+
+  export const userPreviews = (
+    resp: Raw.UserPreviews
+  ): Paged<UserPreview[]> => ({
+    curr: resp.user_previews.map(Cooked.userPreview),
+    nextPage: null,
+  });
+
+  export const userPreviewsNoPaged = (resp: Raw.UserPreviews): UserPreview[] =>
+    resp.user_previews.map(Cooked.userPreview);
+
+  export const popularIllusts = (resp: Raw.PopularIllusts): Illust[] =>
+    resp.illusts.map(Cooked.illust);
+
+  export const popularNovels = (resp: Raw.PopularNovels): Novel[] =>
+    resp.novels.map(Cooked.novel);
+}
+
+const endpoint = <T, U>(
+  client: Client,
+  opts: {
+    method: 'GET' | 'POST';
+    url: string;
+    params: Params;
+    unpack: (raw: T) => U;
+  }
+): Promise<U> =>
+  client
+    .request<T>({
+      method: opts.method,
+      url: opts.url,
+      params: opts.params,
+    })
+    .then(opts.unpack);
+
+/** Latest manga and illustrations by the users you follow. */
+export const myFeed = (
+  client: Client,
+  opts: {
+    restrict?: 'public' | 'private' | 'all';
+    offset?: number;
+  } = {}
+): Promise<Paged<Illust[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v2/illust/follow',
+    //prettier-ignore
+    params: [
+      ['restrict', opts.restrict || 'all'],
+      ['offset', opts.offset],
+    ],
+    unpack: Unpack.illustList,
+  });
+
+/** Latest novels by the users you follow. */
+export const myNovelFeed = (
+  client: Client,
+  opts: {
+    restrict?: 'public' | 'private' | 'all';
+    offset?: number;
+  } = {}
+): Promise<Paged<Novel[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/novel/follow',
+    //prettier-ignore
+    params: [
+      ['restrict', opts.restrict || 'all'],
+      ['offset', opts.offset],
+    ],
+    unpack: Unpack.novelList,
+  });
+
+/** Latest illustrations by everyone. */
+export const globalFeed = (
+  client: Client,
+  opts: {
+    type?: 'illust' | 'manga';
+    offset?: number;
+  } = {}
+): Promise<Paged<Illust[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/illust/new',
+    //prettier-ignore
+    params: [
+        ['content_type', opts.type || 'illust'],
+        ['offset', opts.offset],
+      ],
+    unpack: Unpack.illustList,
+  });
+
+/** Latest novels by everyone. */
+export const globalNovelFeed = (
+  client: Client,
+  opts: {
+    offset?: number;
+  } = {}
+): Promise<Paged<Novel[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/novel/new',
+    params: [['offset', opts.offset]],
+    unpack: Unpack.novelList,
+  });
+
+/** Latest illustrations and manga by your MyPixiv users. */
+export const myPixivFeed = (
+  client: Client,
+  opts: {
+    offset?: number;
+  } = {}
+): Promise<Paged<Illust[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v2/illust/mypixiv',
+    params: [['offset', opts.offset]],
+    unpack: Unpack.illustList,
+  });
+
+/** Latest novels by your MyPixiv users. */
+export const myPixivNovelFeed = (
+  client: Client,
+  opts: {
+    offset?: number;
+  } = {}
+): Promise<Paged<Novel[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/novel/mypixiv',
+    params: [['offset', opts.offset]],
+    unpack: Unpack.novelList,
+  });
+
+/** Live feeds by users you follow. */
+export const myLiveFeed = (
+  client: Client,
+  opts: {
+    offset?: number;
+  } = {}
+): Promise<Paged<Live[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/live/list',
+    //prettier-ignore
+    params: [
+      ['list_type', 'following'],
+      ['offset', opts.offset],
+    ],
+    unpack: Unpack.liveList,
+  });
+
+// ----------------------------------------------------------
+/** Search for illustrations and manga matching a given query. */
+export const searchIllusts = (
+  client: Client,
+  query: string,
+  opts: {
+    match?:
+      | 'partial_match_for_tags'
+      | 'exact_match_for_tags'
+      | 'title_and_caption';
+    within?:
+      | 'within_last_day'
+      | 'within_last_week'
+      | 'within_last_month'
+      | [Date, Date];
+    sortMode?: 'date_desc' | 'date_asc';
+    offset?: number;
+  } = {}
+): Promise<Paged<Illust[]>> => {
+  const params: Params = [
+    ['word', query],
+    ['sort', opts.sortMode || 'date_desc'],
+    ['search_target', opts.match || 'partial_match_for_tags'],
+    ['offset', opts.offset],
+  ];
+
+  if (opts.within instanceof Array) {
+    const [start, end] =
+      opts.within[0] > opts.within[1]
+        ? [opts.within[1], opts.within[0]]
+        : [opts.within[0], opts.within[1]];
+
+    params.push(['start_date', start], ['end_date', end]);
+  } else if (opts.within) {
+    params.push(['duration', opts.within]);
+  }
+
+  return endpoint(client, {
+    method: 'GET',
+    url: 'v1/search/illust',
+    params,
+    unpack: Unpack.illustList,
+  });
+};
+
+export const searchNovels = (
+  client: Client,
+  query: string,
+  opts: {
+    match?:
+      | 'partial_match_for_tags'
+      | 'exact_match_for_tags'
+      | 'title_and_caption';
+    within?:
+      | 'within_last_day'
+      | 'within_last_week'
+      | 'within_last_month'
+      | [Date, Date];
+    sortMode?: 'date_desc' | 'date_asc';
+    offset?: number;
+  } = {}
+): Promise<Paged<Novel[]>> => {
+  const params: Params = [
+    ['word', query],
+    ['sort', opts.sortMode || 'date_desc'],
+    ['search_target', opts.match || 'partial_match_for_tags'],
+    ['offset', opts.offset],
+  ];
+
+  if (opts.within instanceof Array) {
+    const [start, end] =
+      opts.within[0] > opts.within[1]
+        ? [opts.within[1], opts.within[0]]
+        : [opts.within[0], opts.within[1]];
+
+    params.push(['start_date', start], ['end_date', end]);
+  } else if (opts.within) {
+    params.push(['duration', opts.within]);
+  }
+
+  return endpoint(client, {
+    method: 'GET',
+    url: 'v1/search/novel',
+    params,
+    unpack: Unpack.novelList,
+  });
+};
+
+export const searchUsers = (
+  client: Client,
+  query: string,
+  opts: {
+    offset?: number;
+  } = {}
+): Promise<Paged<UserPreview[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/search/user',
+    //prettier-ignore
+    params: [
+      ['word', query],
+      ['offset', opts.offset]
+    ],
+    unpack: Unpack.userPreviews,
+  });
+
+export const searchPopularIllusts = (
+  client: Client,
+  query: string,
+  opts: {
+    match?:
+      | 'partial_match_for_tags'
+      | 'exact_match_for_tags'
+      | 'title_and_caption';
+  } = {}
+): Promise<Illust[]> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/search/popular-preview/illust',
+    params: [
+      ['word', query],
+      ['search_target', opts.match || 'partial_match_for_tags'],
+    ],
+    unpack: Unpack.popularIllusts,
+  });
+
+export const searchPopularNovels = (
+  client: Client,
+  query: string,
+  opts: {
+    match?:
+      | 'partial_match_for_tags'
+      | 'exact_match_for_tags'
+      | 'title_and_caption';
+  } = {}
+): Promise<Novel[]> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/search/popular-preview/illust',
+    params: [
+      ['word', query],
+      ['search_targets', opts.match || 'partial_match_for_tags'],
+    ],
+    unpack: Unpack.popularNovels,
+  });
+
+export const autoComplete = (
+  client: Client,
+  query: string
+): Promise<String[]> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/search/autocomplete',
+    params: [['word', query]],
+    unpack: (resp: { search_auto_complete_keywords: string[] }) =>
+      resp.search_auto_complete_keywords,
+  });
+
+// --------------------------------------------------------------------------
+export const relatedIllusts = (
+  client: Client,
+  startId: number,
+  prev: number[] = []
+): Promise<Paged<Illust[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v2/illust/related',
+    //prettier-ignore
+    params: [
+      ['illust_id', startId],
+      ['seed_illust_ids', prev]
+    ],
+    unpack: Unpack.illustList,
+  });
+
+export const relatedUsers = (
+  client: Client,
+  id: number
+): Promise<UserPreview[]> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/user/related',
+    params: [['seed_user_id', id]],
+    unpack: Unpack.userPreviewsNoPaged,
+  });
