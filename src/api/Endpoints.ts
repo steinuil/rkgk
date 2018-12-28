@@ -255,6 +255,15 @@ namespace Unpack {
 
   export const popularNovels = (resp: Raw.PopularNovels): Novel[] =>
     resp.novels.map(Cooked.novel);
+
+  export const trendingTags = (
+    resp: Raw.TrendingTags
+  ): Array<[string, Illust]> =>
+    resp.trend_tags.map(
+      (t): [string, Illust] => [t.tag, Cooked.illust(t.illust)]
+    );
+
+  export const nothing = (_: any) => {};
 }
 
 const endpoint = <T, U>(
@@ -436,6 +445,7 @@ export const searchIllusts = (
   });
 };
 
+/** Search for novels matching a given query. */
 export const searchNovels = (
   client: Client,
   query: string,
@@ -479,6 +489,7 @@ export const searchNovels = (
   });
 };
 
+/** Search for users. */
 export const searchUsers = (
   client: Client,
   query: string,
@@ -497,6 +508,7 @@ export const searchUsers = (
     unpack: Unpack.userPreviews,
   });
 
+/** Most popular illustrations and manga for a given query. */
 export const searchPopularIllusts = (
   client: Client,
   query: string,
@@ -517,6 +529,7 @@ export const searchPopularIllusts = (
     unpack: Unpack.popularIllusts,
   });
 
+/** Most popular novels for a given query. */
 export const searchPopularNovels = (
   client: Client,
   query: string,
@@ -537,6 +550,7 @@ export const searchPopularNovels = (
     unpack: Unpack.popularNovels,
   });
 
+/** Tag completion for a given search query. */
 export const autoComplete = (
   client: Client,
   query: string
@@ -550,6 +564,7 @@ export const autoComplete = (
   });
 
 // --------------------------------------------------------------------------
+/** Recommendations based on a seed illustration. */
 export const relatedIllusts = (
   client: Client,
   startId: number,
@@ -566,6 +581,7 @@ export const relatedIllusts = (
     unpack: Unpack.illustList,
   });
 
+/** Recommended users based on a seed users. */
 export const relatedUsers = (
   client: Client,
   id: number
@@ -575,4 +591,262 @@ export const relatedUsers = (
     url: 'v1/user/related',
     params: [['seed_user_id', id]],
     unpack: Unpack.userPreviewsNoPaged,
+  });
+
+/** List of popular live feeds. */
+export const popularLiveFeeds = (
+  client: Client,
+  opts: {
+    offset?: number;
+  } = {}
+): Promise<Paged<Live[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/live/list',
+    //prettier-ignore
+    params: [
+      ['list_type', 'popular'],
+      ['offset', opts.offset],
+    ],
+    unpack: Unpack.liveList,
+  });
+
+/** Popular tags with a sample illustration. */
+export const trendingTags = (client: Client) =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/trending-tags/illust',
+    params: [],
+    unpack: Unpack.trendingTags,
+  });
+
+/** Popular illustrations. */
+export const rankingIllusts = (
+  client: Client,
+  opts: {
+    mode?:
+      | 'day'
+      | 'day_female'
+      | 'day_male'
+      | 'month'
+      | 'week'
+      | 'week_original'
+      | 'week_rookie';
+    date?: Date;
+    offset?: number;
+  } = {}
+): Promise<Paged<Illust[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/illust/ranking',
+    params: [
+      ['mode', opts.mode || 'day'],
+      ['date', opts.date],
+      ['offset', opts.offset],
+    ],
+    unpack: Unpack.illustList,
+  });
+
+/** Popular manga. */
+export const rankingManga = (
+  client: Client,
+  opts: {
+    mode?: 'day' | 'month' | 'week' | 'week_rookie';
+    date?: Date;
+    offset?: number;
+  } = {}
+): Promise<Paged<Illust[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/illust/ranking',
+    params: [
+      ['mode', (opts.mode || 'day') + '_manga'],
+      ['date', opts.date],
+      ['offset', opts.offset],
+    ],
+    unpack: Unpack.illustList,
+  });
+
+/** Popular novels. */
+export const rankingNovels = (
+  client: Client,
+  opts: {
+    mode?: 'day' | 'day_female' | 'day_male' | 'week' | 'week_rookie';
+    date?: Date;
+    offset?: number;
+  } = {}
+): Promise<Paged<Novel[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/novel/ranking',
+    params: [
+      ['mode', opts.mode || 'day'],
+      ['date', opts.date],
+      ['offset', opts.offset],
+    ],
+    unpack: Unpack.novelList,
+  });
+
+/** Works by a given user. */
+export const userIllusts = (
+  client: Client,
+  user: number,
+  opts: {
+    type?: 'illust' | 'manga';
+    offset?: number;
+  } = {}
+): Promise<Paged<Illust[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/user/illusts',
+    params: [
+      ['user_id', user],
+      ['type', opts.type || 'illust'],
+      ['offset', opts.offset],
+    ],
+    unpack: Unpack.illustList,
+  });
+
+/** Novels by a given user. */
+export const userNovels = (
+  client: Client,
+  user: number,
+  opts: {
+    offset?: number;
+  } = {}
+): Promise<Paged<Novel[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/user/illusts',
+    //prettier-ignore
+    params: [
+      ['user_id', user],
+      ['type', 'novel'],
+      ['offset', opts.offset]
+    ],
+    unpack: Unpack.novelList,
+  });
+
+/** Public bookmarks by a given user. */
+export const userIllustBookmarks = (
+  client: Client,
+  id: number,
+  opts: {
+    lastBookmark?: number;
+  } = {}
+): Promise<Paged<Illust[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/user/bookmarks/illust',
+    params: [
+      ['user_id', id],
+      ['restrict', 'public'],
+      ['max_bookmark_id', opts.lastBookmark],
+    ],
+    unpack: Unpack.illustList,
+  });
+
+/** Public novel bookmarks by a given user. */
+export const userNovelBookmarks = (
+  client: Client,
+  id: number,
+  opts: {
+    lastBookmark?: number;
+  } = {}
+): Promise<Paged<Novel[]>> =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/user/bookmarks/novel',
+    params: [
+      ['user_id', id],
+      ['restrict', 'public'],
+      ['max_bookmark_id', opts.lastBookmark],
+    ],
+    unpack: Unpack.novelList,
+  });
+
+/** Bookmark an illustration or a manga. */
+export const bookmarkIllust = (
+  client: Client,
+  id: number,
+  opts: {
+    restrict?: 'public' | 'private';
+    tags?: string[];
+  } = {}
+): Promise<void> =>
+  endpoint(client, {
+    method: 'POST',
+    url: 'v2/illust/bookmark/add',
+    params: [
+      ['illust_id', id],
+      ['restrict', opts.restrict || 'public'],
+      ['tags', opts.tags],
+    ],
+    unpack: Unpack.nothing,
+  });
+
+/** Unbookmark an illustration or a manga. */
+export const unbookmarkIllust = (client: Client, id: number): Promise<void> =>
+  endpoint(client, {
+    method: 'POST',
+    url: 'v1/illust/bookmark/delete',
+    params: [['illust_id', id]],
+    unpack: Unpack.nothing,
+  });
+
+/** Bookmark a novel. */
+export const bookmarkNovel = (
+  client: Client,
+  id: number,
+  opts: {
+    restrict?: 'public' | 'private';
+    tags?: string[];
+  } = {}
+): Promise<void> =>
+  endpoint(client, {
+    method: 'POST',
+    url: 'v2/novel/bookmark/add',
+    params: [
+      ['novel_id', id],
+      ['restrict', opts.restrict || 'public'],
+      ['tags', opts.tags],
+    ],
+    unpack: Unpack.nothing,
+  });
+
+/** Unbookmark a novel. */
+export const unbookmarkNovel = (client: Client, id: number): Promise<void> =>
+  endpoint(client, {
+    method: 'POST',
+    url: 'v1/novel/bookmark/delete',
+    params: [['novel_id', id]],
+    unpack: Unpack.nothing,
+  });
+
+/** Follow a user. */
+export const follow = (
+  client: Client,
+  id: number,
+  opts: {
+    restrict?: 'public' | 'private';
+  } = {}
+): Promise<void> =>
+  endpoint(client, {
+    method: 'POST',
+    url: 'v1/user/follow/add',
+    //prettier-ignore
+    params: [
+      ['user_id', id],
+      ['restrict', opts.restrict || 'public']
+    ],
+    unpack: Unpack.nothing,
+  });
+
+/** Unfollow a user. */
+export const unfollow = (client: Client, id: number): Promise<void> =>
+  endpoint(client, {
+    method: 'POST',
+    url: 'v1/user/follow/delete',
+    params: [['user_id', id]],
+    unpack: Unpack.nothing,
   });
