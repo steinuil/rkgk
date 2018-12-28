@@ -16,7 +16,5 @@
     "target": "es2015",
 
     "baseUrl": "node_modules"
-  },
-
-  "files": ["src/pixiv.ts", "src/raw.ts"]
+  }
 }

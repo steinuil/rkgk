@@ -1,3 +1,7 @@
+/**
+ * The type of possible endpoint parameters.
+ */
+
 export type Params = Array<[string, Param]>;
 
 // We include `undefined` in the type to allow optional parameters to be left
