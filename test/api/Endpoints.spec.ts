@@ -48,3 +48,13 @@ test.each([
   expect(data.length).toBeGreaterThan(1);
   expect(data[0]).toHaveProperty('id');
 });
+
+test.each([
+  ['trendingTags', E.trendingTags],
+  ['trendingNovelTags', E.trendingNovelTags],
+])('unpack %s', async (_, endpoint) => {
+  expect.assertions(2);
+  const data = await endpoint(new MockClient());
+  expect(data.length).toBeGreaterThan(1);
+  expect(data[0][1]).toHaveProperty('id');
+});

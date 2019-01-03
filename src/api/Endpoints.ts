@@ -23,7 +23,7 @@
  * v1/illust/series
  * v1/live/list | {@link myLiveFeed}, {@link popularLiveFeeds} | yes
  * v1/mail-authentication/send
- * v1/manga/recommended | - | yes
+ * v1/manga/recommended | {@link recommendedManga} | yes
  * v1/mute/list | - | yes
  * v1/notification/settings
  * v1/novel/bookmark/delete | {@link unbookmarkNovel} | -
@@ -34,7 +34,7 @@
  * v1/novel/mypixiv | {@link myPixivNovelFeed} | yes
  * v1/novel/new | {@link globalNovelFeed} | yes
  * v1/novel/ranking | {@link rankingNovels} | yes
- * v1/novel/recommended | - | yes
+ * v1/novel/recommended | {@link recommendedNovels} | yes
  * v1/novel/recommended-nologin
  * v1/novel/series
  * v1/novel/text
@@ -44,11 +44,11 @@
  * v1/search/illust | {@link searchIllusts} | yes
  * v1/search/novel | {@link searchNovels} | yes
  * v1/search/popular-preview/illust | {@link searchPopularIllusts} | yes
- * v1/search/popular-preview/novel | {@link searchPopularIllusts} | yes
+ * v1/search/popular-preview/novel | {@link searchPopularNovels} | yes
  * v1/search/user | {@link searchUsers} | yes
  * v1/spotlight/articles | - | yes
  * v1/trending-tags/illust | {@link trendingTags} | yes
- * v1/trending-tags/novel | - | yes
+ * v1/trending-tags/novel | {@link trendingNovelTags} | yes
  * v1/ugoira/metadata
  * v1/user/bookmark-tags/illust | - | yes
  * v1/user/bookmark-tags/novel | - | yes
@@ -435,21 +435,27 @@ export const recommendedIllusts = (
   opts: {
     // type?: 'illust' | 'manga';
     includeRankingLabel?: boolean;
-    maxBookmarkIdForRecentIllusts?: number;
-    minBookmarkIdForRecentIllusts?: number;
+    includeRankingIllusts?: boolean;
+    maxBookmarkIdForRecommend?: number;
+    minBookmarkIdForRecentIllust?: number;
     offset?: number;
   } = {}
 ): Promise<Paged<Illust[]>> => {
   const includeRankingLabel =
     opts.includeRankingLabel === undefined ? true : opts.includeRankingLabel;
+  const includeRankingIllusts =
+    opts.includeRankingIllusts === undefined
+      ? true
+      : opts.includeRankingIllusts;
   return endpoint(client, {
     method: 'GET',
     url: 'v1/illust/recommended',
     params: [
       // ['content_type', opts.type || 'illust'],
-      ['max_bookmark_id_for_recent_illust', opts.maxBookmarkIdForRecentIllusts],
-      ['min_bookmark_id_for_recent_illust', opts.minBookmarkIdForRecentIllusts],
+      ['max_bookmark_id_for_recommend', opts.maxBookmarkIdForRecommend],
+      ['min_bookmark_id_for_recent_illust', opts.minBookmarkIdForRecentIllust],
       ['include_ranking_label', includeRankingLabel],
+      ['include_ranking_illusts', includeRankingIllusts],
       ['offset', opts.offset],
     ],
     unpack: Unpack.illustList,
@@ -461,21 +467,46 @@ export const recommendedManga = (
   client: Client,
   opts: {
     bookmarkIllustIds?: number[];
-    includeRankingLabel?: boolean;
+    includeRankingIllusts?: boolean;
     offset?: number;
   } = {}
 ): Promise<Paged<Illust[]>> => {
-  const includeRankingLabel =
-    opts.includeRankingLabel === undefined ? true : opts.includeRankingLabel;
+  const includeRankingIllusts =
+    opts.includeRankingIllusts === undefined
+      ? true
+      : opts.includeRankingIllusts;
   return endpoint(client, {
     method: 'GET',
     url: 'v1/manga/recommended',
     params: [
       ['bookmark_illust_ids', opts.bookmarkIllustIds],
-      ['include_ranking_label', includeRankingLabel],
+      ['include_ranking_illusts', includeRankingIllusts],
       ['offset', opts.offset],
     ],
     unpack: Unpack.illustList,
+  });
+};
+
+/** Recommended novels. */
+export const recommendedNovels = (
+  client: Client,
+  opts: {
+    bookmarkIllustIds?: number[];
+    includeRankingNovels?: boolean;
+    offset?: number;
+  } = {}
+): Promise<Paged<Novel[]>> => {
+  const includeRankingNovels =
+    opts.includeRankingNovels === undefined ? true : opts.includeRankingNovels;
+  return endpoint(client, {
+    method: 'GET',
+    url: 'v1/novel/recommended',
+    params: [
+      ['bookmark_illust_ids', opts.bookmarkIllustIds],
+      ['include_ranking_illusts', includeRankingNovels],
+      ['offset', opts.offset],
+    ],
+    unpack: Unpack.novelList,
   });
 };
 
@@ -502,6 +533,15 @@ export const trendingTags = (client: Client) =>
   endpoint(client, {
     method: 'GET',
     url: 'v1/trending-tags/illust',
+    params: [],
+    unpack: Unpack.trendingTags,
+  });
+
+/** Popular novel tags with a sample novel. */
+export const trendingNovelTags = (client: Client) =>
+  endpoint(client, {
+    method: 'GET',
+    url: 'v1/trending-tags/novel',
     params: [],
     unpack: Unpack.trendingTags,
   });
