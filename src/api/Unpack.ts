@@ -1,3 +1,6 @@
+/** @summary Turn raw API responses into objects we can work with. */
+
+/** @ignore */
 import { Illust, Novel, Live, UserPreview, Paged } from './Items';
 import * as Cooked from './Cooked';
 import * as Raw from './Raw';

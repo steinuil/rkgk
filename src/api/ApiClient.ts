@@ -92,7 +92,7 @@ export class ApiClient extends Client {
     const params =
       opts.params instanceof URLSearchParams
         ? opts.params
-        : Params.toUrlSearchParams(opts.params);
+        : Params.toURLSearchParams(opts.params);
 
     const url = this.domains.api + opts.url + '?' + params.toString();
 

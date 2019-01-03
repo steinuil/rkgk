@@ -1,6 +1,6 @@
-// Interfaces to the raw server responses.
+/** @summary Interfaces to the raw items. */
 
-// Authentication response
+/** Authentication response */
 export interface Login {
   response: {
     device_token: string;
@@ -54,8 +54,6 @@ export enum SexualContent {
   Sexual = 4,
   Grotesque = 6,
 }
-
-export interface XXX {}
 
 // Base types
 export interface User {
@@ -227,7 +225,7 @@ export interface PopularNovels {
 export interface IllustRanking {
   illusts: Array<Illust>;
   contest_exists: boolean;
-  ranking_illusts: Array<XXX>;
+  ranking_illusts: Array<unknown>;
 }
 
 export interface IllustDetail {
@@ -235,10 +233,10 @@ export interface IllustDetail {
 }
 
 export interface NovelText {
-  novel_marker: XXX;
+  novel_marker: unknown;
   novel_text: string;
-  series_next: XXX;
-  series_prev: XXX;
+  series_next: unknown;
+  series_prev: unknown;
 }
 
 export interface UgoiraDetail {
@@ -265,9 +263,9 @@ export interface BookmarkDetail {
 export interface MuteList {
   mute_limit_count: number;
   muted_count: number;
-  muted_tags: Array<XXX>;
+  muted_tags: Array<unknown>;
   muted_tags_count: number;
-  muted_users: Array<XXX>;
+  muted_users: Array<unknown>;
   muted_users_count: number;
 }
 
