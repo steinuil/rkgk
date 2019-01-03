@@ -3,7 +3,6 @@ _*
 .*
 !.gitignore
 !.prettierrc.json
-yarn.lock
 yarn-error.log
 doc
 build

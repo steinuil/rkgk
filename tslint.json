@@ -5,7 +5,12 @@
     "no-return-await": true,
     "arrow-return-shorthand": true,
     "class-name": true,
-    "variable-name": [true, "check-format", "allow-trailing-underscore"],
+    "variable-name": [
+      true,
+      "check-format",
+      "allow-trailing-underscore",
+      "allow-pascal-case"
+    ],
     "import-spacing": true,
     "curly": true
   }
