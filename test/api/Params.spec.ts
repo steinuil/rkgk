@@ -1,11 +1,12 @@
 import * as fc from 'fast-check';
 import { toURLSearchParams } from '../../src/api/Params';
 
-test("doesn't include falsy values except for 0", () => {
+test("doesn't include falsy values except for 0 and false", () => {
   const param = toURLSearchParams([
     ['empty string', ''],
     ['empty array', []],
     ['undefined', undefined],
+    ['false', false],
     ['NaN', NaN],
     ['zero', 0],
   ]);
@@ -13,6 +14,7 @@ test("doesn't include falsy values except for 0", () => {
   expect(param.get('empty string')).toBeNull();
   expect(param.get('empty array')).toBeNull();
   expect(param.get('undefined')).toBeNull();
+  expect(param.get('false')).toBe('false');
   expect(param.get('NaN')).toBeNull();
   expect(param.get('zero')).toBe('0');
 });

@@ -7,6 +7,7 @@ export type Param =
   | string
   | number
   | Date
+  | boolean
   | Array<string>
   | Array<number>
   | undefined;
@@ -15,7 +16,7 @@ export const toURLSearchParams = (params: Params): URLSearchParams => {
   const out = new URLSearchParams();
 
   for (const [name, param] of params) {
-    if (!param && param !== 0) {
+    if (!param && param !== 0 && param !== false) {
       continue;
     }
 
