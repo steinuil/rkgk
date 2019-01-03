@@ -429,12 +429,14 @@ export const relatedUsers = (
     unpack: Unpack.userPreviewsNoPaged,
   });
 
-/** Recommended illustrations or manga. */
+/** Recommended illustrations. */
 export const recommendedIllusts = (
   client: Client,
   opts: {
-    type?: 'illust' | 'manga';
+    // type?: 'illust' | 'manga';
     includeRankingLabel?: boolean;
+    maxBookmarkIdForRecentIllusts?: number;
+    minBookmarkIdForRecentIllusts?: number;
     offset?: number;
   } = {}
 ): Promise<Paged<Illust[]>> => {
@@ -444,7 +446,32 @@ export const recommendedIllusts = (
     method: 'GET',
     url: 'v1/illust/recommended',
     params: [
-      ['content_type', opts.type || 'illust'],
+      // ['content_type', opts.type || 'illust'],
+      ['max_bookmark_id_for_recent_illust', opts.maxBookmarkIdForRecentIllusts],
+      ['min_bookmark_id_for_recent_illust', opts.minBookmarkIdForRecentIllusts],
+      ['include_ranking_label', includeRankingLabel],
+      ['offset', opts.offset],
+    ],
+    unpack: Unpack.illustList,
+  });
+};
+
+/** Recommended manga. */
+export const recommendedManga = (
+  client: Client,
+  opts: {
+    bookmarkIllustIds?: number[];
+    includeRankingLabel?: boolean;
+    offset?: number;
+  } = {}
+): Promise<Paged<Illust[]>> => {
+  const includeRankingLabel =
+    opts.includeRankingLabel === undefined ? true : opts.includeRankingLabel;
+  return endpoint(client, {
+    method: 'GET',
+    url: 'v1/manga/recommended',
+    params: [
+      ['bookmark_illust_ids', opts.bookmarkIllustIds],
       ['include_ranking_label', includeRankingLabel],
       ['offset', opts.offset],
     ],
