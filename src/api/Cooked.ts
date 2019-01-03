@@ -1,3 +1,6 @@
+/** @summary Functions from raw server items to the client items. */
+
+/** @ignore */
 import * as Raw from './Raw';
 import { MyInfo, User, UserPreview, Illust, Live, Novel, Work } from './Items';
 

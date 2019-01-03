@@ -1,6 +1,6 @@
-// Interfaces to the raw server responses.
+/** @summary Interfaces to the raw items. */
 
-// Authentication response
+/** Authentication response */
 export interface Login {
   response: {
     device_token: string;

@@ -1,5 +1,5 @@
 /**
- * @overview Pixiv API endpoints
+ * @overview Pixiv API endpoints.
  *
  * # List of endpoints
  *
@@ -96,7 +96,7 @@
  * provisional-accounts/create
  */
 
-/** ignore https://github.com/TypeStrong/typedoc/issues/603 */
+/** @ignore https://github.com/TypeStrong/typedoc/issues/603 */
 import { Illust, Novel, Live, UserPreview, Paged } from './Items';
 import { Client } from './Client';
 import { Params } from './Params';
