@@ -7,11 +7,15 @@
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^23.3.11",
+    "@types/node": "^10.12.18",
     "fast-check": "^1.9.1",
     "jest": "^23.6.0",
     "ts-jest": "^23.10.5",
     "tslint": "^5.9.1",
     "typedoc": "^0.13.0",
     "typescript": "^3.2.2"
+  },
+  "scripts": {
+    "test": "jest --watch"
   }
 }
