@@ -18,7 +18,7 @@
  * v1/illust/detail
  * v1/illust/new | {@link globalFeed} | yes
  * v1/illust/ranking | {@link rankingIllusts}, {@link rankingManga} | yes
- * v1/illust/recommended
+ * v1/illust/recommended | {@link recommendedIllusts} | no
  * v1/illust/recommended-nologin
  * v1/illust/series
  * v1/live/list | {@link myLiveFeed}, {@link popularLiveFeeds} | yes
@@ -400,7 +400,7 @@ export const autoComplete = (
   });
 
 // --------------------------------------------------------------------------
-/** Recommendations based on a seed illustration. */
+/** Illustrations related to a seed illustration. */
 export const relatedIllusts = (
   client: Client,
   startId: number,
@@ -417,7 +417,7 @@ export const relatedIllusts = (
     unpack: Unpack.illustList,
   });
 
-/** Recommended users based on a seed users. */
+/** Users related to a seed user. */
 export const relatedUsers = (
   client: Client,
   id: number
@@ -428,6 +428,29 @@ export const relatedUsers = (
     params: [['seed_user_id', id]],
     unpack: Unpack.userPreviewsNoPaged,
   });
+
+/** Recommended illustrations or manga. */
+export const recommendedIllusts = (
+  client: Client,
+  opts: {
+    type?: 'illust' | 'manga';
+    includeRankingLabel?: boolean;
+    offset?: number;
+  } = {}
+): Promise<Paged<Illust[]>> => {
+  const includeRankingLabel =
+    opts.includeRankingLabel === undefined ? true : opts.includeRankingLabel;
+  return endpoint(client, {
+    method: 'GET',
+    url: 'v1/illust/recommended',
+    params: [
+      ['content_type', opts.type || 'illust'],
+      ['include_ranking_label', includeRankingLabel],
+      ['offset', opts.offset],
+    ],
+    unpack: Unpack.illustList,
+  });
+};
 
 /** List of popular live feeds. */
 export const popularLiveFeeds = (

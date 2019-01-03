@@ -13,6 +13,7 @@ test.each([
   ['rankingIllusts', E.rankingIllusts],
   ['rankingManga', E.rankingManga],
   ['rankingNovels', E.rankingNovels],
+  // ['recommendedIllusts', E.recommendedIllusts],
   ['relatedIllusts', E.relatedIllusts],
   ['searchIllusts', E.searchIllusts],
   ['searchNovels', E.searchNovels],
