@@ -1,7 +1,4 @@
-/**
- * The type of possible endpoint parameters.
- */
-
+/** The type of possible endpoint parameters. */
 export type Params = Array<[string, Param]>;
 
 // We include `undefined` in the type to allow optional parameters to be left
@@ -14,11 +11,11 @@ export type Param =
   | Array<number>
   | undefined;
 
-export const toUrlSearchParams = (params: Params): URLSearchParams => {
+export const toURLSearchParams = (params: Params): URLSearchParams => {
   const out = new URLSearchParams();
 
   for (const [name, param] of params) {
-    if (!param) {
+    if (!param && param !== 0) {
       continue;
     }
 
