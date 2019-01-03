@@ -1,3 +1,102 @@
+/**
+ * @overview Pixiv API endpoints
+ *
+ * # List of endpoints
+ *
+ * Base url: https://app-api.pixiv.net
+ *
+ * URL | Implemented | Sample
+ * --- | ----------- | ------
+ * v1/application-info/android | - | yes
+ * v1/application-info/ios
+ * v1/illust-series/illust
+ * v1/illust/bookmark/delete | {@link unbookmarkIllust} | -
+ * v1/illust/bookmark/users
+ * v1/illust/comment/add
+ * v1/illust/comment/replies
+ * v1/illust/comments
+ * v1/illust/detail
+ * v1/illust/new | {@link globalFeed} | yes
+ * v1/illust/ranking | {@link rankingIllusts}, {@link rankingManga} | yes
+ * v1/illust/recommended
+ * v1/illust/recommended-nologin
+ * v1/illust/series
+ * v1/live/list | {@link myLiveFeed}, {@link popularLiveFeeds} | yes
+ * v1/mail-authentication/send
+ * v1/manga/recommended | - | yes
+ * v1/mute/list | - | yes
+ * v1/notification/settings
+ * v1/novel/bookmark/delete | {@link unbookmarkNovel} | -
+ * v1/novel/comment/add
+ * v1/novel/comment/replies
+ * v1/novel/comments | - | yes
+ * v1/novel/follow | {@link myNovelFeed} | yes
+ * v1/novel/mypixiv | {@link myPixivNovelFeed} | yes
+ * v1/novel/new | {@link globalNovelFeed} | yes
+ * v1/novel/ranking | {@link rankingNovels} | yes
+ * v1/novel/recommended | - | yes
+ * v1/novel/recommended-nologin
+ * v1/novel/series
+ * v1/novel/text
+ * v1/search/autocomplete | {@link autoComplete} | no
+ * v1/search/bookmark-ranges/illust
+ * v1/search/bookmark-ranges/novel
+ * v1/search/illust | {@link searchIllusts} | yes
+ * v1/search/novel | {@link searchNovels} | yes
+ * v1/search/popular-preview/illust | {@link searchPopularIllusts} | yes
+ * v1/search/popular-preview/novel | {@link searchPopularIllusts} | yes
+ * v1/search/user | {@link searchUsers} | yes
+ * v1/spotlight/articles | - | yes
+ * v1/trending-tags/illust | {@link trendingTags} | yes
+ * v1/trending-tags/novel | - | yes
+ * v1/ugoira/metadata
+ * v1/user/bookmark-tags/illust | - | yes
+ * v1/user/bookmark-tags/novel | - | yes
+ * v1/user/bookmarks/illust | {@link userIllustBookmarks} | yes
+ * v1/user/bookmarks/novel | {@link userNovelBookmarks} | yes
+ * v1/user/browsing-history/illusts
+ * v1/user/browsing-history/novels
+ * v1/user/detail | - | yes
+ * v1/user/follow/add | {@link follow} | -
+ * v1/user/follow/delete | {@link unfollow} | -
+ * v1/user/follow/detail | - | yes
+ * v1/user/follower
+ * v1/user/following
+ * v1/user/illusts | {@link userIllusts} | yes
+ * v1/user/list
+ * v1/user/me/state
+ * v1/user/mypixiv
+ * v1/user/novels | {@link userNovels} | no
+ * v1/user/profile/presets
+ * v1/user/recommended | - | yes
+ * v1/user/related | {@link relatedUsers} | yes
+ * v1/user/workspace/edit
+ * v1/walkthrough/illusts
+ * v2/illust/bookmark/add | {@link bookmarkIllust} | -
+ * v2/illust/bookmark/detail | - | yes
+ * v2/illust/comments
+ * v2/illust/follow | {@link myFeed} | yes
+ * v2/illust/mypixiv | {@link myPixivFeed} | yes
+ * v2/illust/related | {@link relatedIllusts} | yes
+ * v2/novel/bookmark/add | {@link bookmarkNovel} | -
+ * v2/novel/comments
+ * v2/novel/detail
+ * v2/novel/markers | - | yes
+ * v2/user/bookmark/detail
+ * v2/user/browsing-history/illust/add
+ * v2/user/browsing-history/novel/add
+ *
+ * ## Other endpoints
+ *
+ * Base: https://accounts.pixiv.net/api/
+ *
+ * URL | Implemented | Sample
+ * --- | ----------- | ------
+ * account/edit
+ * provisional-accounts/create
+ */
+
+/** ignore https://github.com/TypeStrong/typedoc/issues/603 */
 import { Illust, Novel, Live, UserPreview, Paged } from './Items';
 import { Client } from './Client';
 import { Params } from './Params';
@@ -279,7 +378,7 @@ export const searchPopularNovels = (
 ): Promise<Novel[]> =>
   endpoint(client, {
     method: 'GET',
-    url: 'v1/search/popular-preview/illust',
+    url: 'v1/search/popular-preview/novel',
     params: [
       ['word', query],
       ['search_targets', opts.match || 'partial_match_for_tags'],
@@ -454,7 +553,7 @@ export const userNovels = (
 ): Promise<Paged<Novel[]>> =>
   endpoint(client, {
     method: 'GET',
-    url: 'v1/user/illusts',
+    url: 'v1/user/novels',
     //prettier-ignore
     params: [
       ['user_id', user],
