@@ -93,7 +93,7 @@ export interface Work {
 
 export interface Illust extends Work {
   type: 'illust' | 'manga' | 'ugoira';
-  tools: Array<string>;
+  tools: string[];
   width: number;
   height: number;
   sanity_level: SexualContent;
@@ -159,8 +159,8 @@ export interface Article {
 
 export interface UserPreview {
   user: User;
-  illusts: Array<Illust>;
-  novels: Array<Novel>;
+  illusts: Illust[];
+  novels: Novel[];
   is_muted: boolean;
 }
 
@@ -170,20 +170,20 @@ export interface Paged {
 }
 
 export interface IllustList extends Paged {
-  illusts: Array<Illust>;
+  illusts: Illust[];
 }
 
 export interface NovelList extends Paged {
-  novels: Array<Novel>;
+  novels: Novel[];
 }
 
 export interface UserPreviews extends Paged {
-  user_previews: Array<UserPreview>;
+  user_previews: UserPreview[];
 }
 
 export interface CommentList extends Paged {
   total_comments?: number;
-  comments: Array<Comment>;
+  comments: Comment[];
 }
 
 export interface NovelMarkers extends Paged {
@@ -196,12 +196,12 @@ export interface NovelMarkers extends Paged {
 }
 
 export interface LiveList extends Paged {
-  lives: Array<Live>;
+  lives: Live[];
   live_info: null;
 }
 
 export interface SpotlightArticles extends Paged {
-  spotlight_articles: Array<Article>;
+  spotlight_articles: Article[];
 }
 
 // Other pages
@@ -213,17 +213,17 @@ export interface TrendingTags {
 }
 
 export interface PopularIllusts {
-  illusts: Array<Illust>;
+  illusts: Illust[];
   search_span_limit: number;
 }
 
 export interface PopularNovels {
-  novels: Array<Novel>;
+  novels: Novel[];
   search_span_limit: number;
 }
 
 export interface IllustRanking {
-  illusts: Array<Illust>;
+  illusts: Illust[];
   contest_exists: boolean;
   ranking_illusts: Array<unknown>;
 }

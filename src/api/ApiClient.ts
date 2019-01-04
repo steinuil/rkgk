@@ -85,8 +85,8 @@ export class ApiClient implements Client {
 
     const r = await fetch(this.domains.auth, {
       method: 'POST',
-      headers: headers,
       body: outParams.toString(),
+      headers,
     });
 
     if (!r.ok) {
@@ -114,7 +114,7 @@ export class ApiClient implements Client {
         state: 'logged',
         accessToken: resp.response.access_token,
         refreshToken: resp.response.refresh_token,
-        expires: expires,
+        expires,
       };
 
       return resp.response.access_token;

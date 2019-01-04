@@ -8,8 +8,8 @@ export type Param =
   | number
   | Date
   | boolean
-  | Array<string>
-  | Array<number>
+  | string[]
+  | number[]
   | undefined;
 
 export const toURLSearchParams = (params: Params): URLSearchParams => {

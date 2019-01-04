@@ -8,8 +8,8 @@ export interface Paged<T> {
 // Entities
 export interface UserPreview {
   user: User;
-  illusts: Array<Illust>;
-  novels: Array<Novel>;
+  illusts: Illust[];
+  novels: Novel[];
   muted: boolean;
 }
 
@@ -41,7 +41,7 @@ export interface Work {
   date: Date;
   user: User;
   pages: number;
-  tags: Array<string>;
+  tags: string[];
   thumbnail: string;
   /*
   bookmarks: number | null;
@@ -59,8 +59,8 @@ export enum SexualContent {
 
 export interface Illust extends Work {
   type: 'illust' | 'manga' | 'ugoira';
-  tools: Array<string>;
-  images: Array<string>;
+  tools: string[];
+  images: string[];
   dimensions: [number, number];
   sexualContent: SexualContent;
 }
@@ -78,7 +78,7 @@ export interface Live {
   channelId: string;
   name: string;
   owner: User;
-  performers: Array<User>;
+  performers: User[];
   performerCount: number;
   created: Date;
   closed: boolean;

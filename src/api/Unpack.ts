@@ -39,4 +39,4 @@ export const trendingTags = (resp: Raw.TrendingTags): Array<[string, Illust]> =>
     (t): [string, Illust] => [t.tag, Cooked.illust(t.illust)]
   );
 
-export const nothing = (_: any) => {};
+export const nothing = (_: unknown) => {};

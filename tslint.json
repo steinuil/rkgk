@@ -1,17 +1,44 @@
 {
   "tslint.enable": true,
+  "extends": "tslint:latest",
   "rules": {
+    "quotemark": [true, "single", "jsx-double", "avoid-escape"],
+    "interface-name": false,
+    "no-empty": [true, "allow-empty-functions"],
+    "no-console": false,
+    "object-literal-sort-keys": false,
+    "no-shadowed-variable": false,
+    "ordered-imports": false,
+    "trailing-comma": [
+      true,
+      {
+        "multiline": {
+          "functions": "never",
+          "objects": "always",
+          "arrays": "always",
+          "imports": "always",
+          "exports": "always",
+          "typeLiterals": "always"
+        },
+        "singleline": "never"
+      }
+    ],
+    "no-namespace": false,
+    "member-access": false,
+    "semicolon": [true, "always", "ignore-bound-class-methods"],
+    "max-classes-per-file": false,
     "prefer-function-over-method": true,
-    "no-return-await": true,
     "arrow-return-shorthand": true,
-    "class-name": true,
     "variable-name": [
       true,
       "check-format",
       "allow-trailing-underscore",
       "allow-pascal-case"
     ],
-    "import-spacing": true,
-    "curly": true
+    "only-arrow-functions": [true, "allow-declarations"],
+    "ban-ts-ignore": true,
+    "no-any": true,
+    "curly": true,
+    "member-ordering": false
   }
 }

@@ -9,7 +9,7 @@ export const myInfo = (r: Raw.Login): MyInfo => {
   return {
     name: user.account,
     nick: user.name,
-    id: parseInt(user.id),
+    id: parseInt(user.id, 10),
     email: user.mail_address,
     avatar: {
       big: user.profile_image_urls.px_170x170,
@@ -41,16 +41,14 @@ export const work = (w: Raw.Work): Work => ({
 });
 
 export const illust = (i: Raw.Illust): Illust => {
-  let illust = work(i) as Illust;
+  const illust = work(i) as Illust;
   illust.tools = i.tools;
   illust.dimensions = [i.width, i.height];
   illust.type = i.type;
 
-  if (i.meta_single_page.original_image_url) {
-    illust.images = [i.meta_single_page.original_image_url];
-  } else {
-    illust.images = i.meta_pages!.map((x) => x.image_urls.original);
-  }
+  illust.images = i.meta_single_page.original_image_url
+    ? [i.meta_single_page.original_image_url]
+    : i.meta_pages!.map((x) => x.image_urls.original);
 
   illust.sexualContent = i.sanity_level / 2 - 1;
 
@@ -58,7 +56,7 @@ export const illust = (i: Raw.Illust): Illust => {
 };
 
 export const novel = (n: Raw.Novel): Novel => {
-  let novel = work(n) as Novel;
+  const novel = work(n) as Novel;
   novel.length = n.text_length;
   novel.series = n.series;
   return novel;
@@ -72,7 +70,7 @@ export const userPreview = (u: Raw.UserPreview): UserPreview => ({
 });
 
 export const live = (l: Raw.Live): Live => ({
-  id: parseInt(l.id),
+  id: parseInt(l.id, 10),
   channelId: l.channel_id,
   name: l.name,
   owner: user(l.owner.user),

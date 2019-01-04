@@ -130,7 +130,7 @@ export const myFeed = (
   endpoint(client, {
     method: 'GET',
     url: 'v2/illust/follow',
-    //prettier-ignore
+    // prettier-ignore
     params: [
       ['restrict', opts.restrict || 'all'],
       ['offset', opts.offset],
@@ -149,7 +149,7 @@ export const myNovelFeed = (
   endpoint(client, {
     method: 'GET',
     url: 'v1/novel/follow',
-    //prettier-ignore
+    // prettier-ignore
     params: [
       ['restrict', opts.restrict || 'all'],
       ['offset', opts.offset],
@@ -168,7 +168,7 @@ export const globalFeed = (
   endpoint(client, {
     method: 'GET',
     url: 'v1/illust/new',
-    //prettier-ignore
+    // prettier-ignore
     params: [
         ['content_type', opts.type || 'illust'],
         ['offset', opts.offset],
@@ -228,7 +228,7 @@ export const myLiveFeed = (
   endpoint(client, {
     method: 'GET',
     url: 'v1/live/list',
-    //prettier-ignore
+    // prettier-ignore
     params: [
       ['list_type', 'following'],
       ['offset', opts.offset],
@@ -336,10 +336,10 @@ export const searchUsers = (
   endpoint(client, {
     method: 'GET',
     url: 'v1/search/user',
-    //prettier-ignore
+    // prettier-ignore
     params: [
       ['word', query],
-      ['offset', opts.offset]
+      ['offset', opts.offset],
     ],
     unpack: Unpack.userPreviews,
   });
@@ -409,10 +409,10 @@ export const relatedIllusts = (
   endpoint(client, {
     method: 'GET',
     url: 'v2/illust/related',
-    //prettier-ignore
+    // prettier-ignore
     params: [
       ['illust_id', startId],
-      ['seed_illust_ids', prev]
+      ['seed_illust_ids', prev],
     ],
     unpack: Unpack.illustList,
   });
@@ -520,7 +520,7 @@ export const popularLiveFeeds = (
   endpoint(client, {
     method: 'GET',
     url: 'v1/live/list',
-    //prettier-ignore
+    // prettier-ignore
     params: [
       ['list_type', 'popular'],
       ['offset', opts.offset],
@@ -644,11 +644,11 @@ export const userNovels = (
   endpoint(client, {
     method: 'GET',
     url: 'v1/user/novels',
-    //prettier-ignore
+    // prettier-ignore
     params: [
       ['user_id', user],
       ['type', 'novel'],
-      ['offset', opts.offset]
+      ['offset', opts.offset],
     ],
     unpack: Unpack.novelList,
   });
@@ -760,10 +760,10 @@ export const follow = (
   endpoint(client, {
     method: 'POST',
     url: 'v1/user/follow/add',
-    //prettier-ignore
+    // prettier-ignore
     params: [
       ['user_id', id],
-      ['restrict', opts.restrict || 'public']
+      ['restrict', opts.restrict || 'public'],
     ],
     unpack: Unpack.nothing,
   });
