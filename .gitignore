@@ -4,5 +4,5 @@ _*
 !.gitignore
 !.prettierrc.json
 yarn-error.log
-doc
+docs
 build

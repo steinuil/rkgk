@@ -17,6 +17,6 @@
   },
   "scripts": {
     "test": "jest --watch",
-    "doc": "typedoc --out doc --theme minimal"
+    "doc": "typedoc --out docs --theme minimal --listInvalidSymbolLinks"
   }
 }
