@@ -1,10 +1,52 @@
-import { Client, Options, InvalidCredentials } from './Client';
+import { Client, Options } from './Client';
 import * as Params from './Params';
 import { ApiError, AuthError, Login } from './Raw';
 
-export class ApiClient extends Client {
+export interface Domains {
+  api: string;
+  auth: string;
+}
+
+export type Credentials = Token | Password | Logged;
+
+export interface Token {
+  state: 'token';
+  refreshToken: string;
+}
+
+export interface Password {
+  state: 'password';
+  username: string;
+  password: string;
+}
+
+export interface Logged {
+  state: 'logged';
+  refreshToken: string;
+  accessToken: string;
+  expires: Date;
+}
+
+export class InvalidCredentials extends Error {
+  constructor() {
+    super();
+    Object.setPrototypeOf(this, InvalidCredentials.prototype);
+  }
+}
+
+export class ApiClient implements Client {
+  constructor(private creds: Credentials, private domains: Domains) {}
+
   forceRefresh = async () => {
     await this.refresh(true);
+  };
+
+  setCredentials = (username: string, password: string) => {
+    this.creds = {
+      state: 'password',
+      username,
+      password,
+    };
   };
 
   private refresh = async (force = false): Promise<string> => {

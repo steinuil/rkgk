@@ -12,26 +12,12 @@ const readFile = (name: string): Promise<string> =>
     });
   });
 
-export class MockClient extends Client {
-  constructor() {
-    super(
-      {
-        state: 'password',
-        username: '',
-        password: '',
-      },
-      { api: '', auth: '' }
-    );
-  }
-
+/** Pixiv API client that reads data from the samples directory */
+export class MockClient implements Client {
   request = async <T>(opts: Options): Promise<T> => {
     const fname =
       __dirname + '\\..\\sample\\' + opts.url.replace(/\//g, '_') + '.json';
     const f = JSON.parse(await readFile(fname));
     return f;
-  };
-
-  forceRefresh = () => {
-    return Promise.resolve();
   };
 }
