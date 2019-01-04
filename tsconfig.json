@@ -12,13 +12,13 @@
     "sourceMap": true,
     "outDir": "build",
 
-    "module": "es6",
-    "target": "es2015",
+    "module": "commonjs",
+    "target": "es2017",
     "moduleResolution": "node",
     "skipLibCheck": true,
 
     "baseUrl": "node_modules"
   },
 
-  "include": ["src/"]
+  "include": ["app/", "src/"]
 }

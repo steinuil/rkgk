@@ -6,16 +6,16 @@ test("doesn't include falsy values except for 0 and false", () => {
     ['empty string', ''],
     ['empty array', []],
     ['undefined', undefined],
-    ['false', false],
     ['NaN', NaN],
+    ['false', false],
     ['zero', 0],
   ]);
 
   expect(param.get('empty string')).toBeNull();
   expect(param.get('empty array')).toBeNull();
   expect(param.get('undefined')).toBeNull();
-  expect(param.get('false')).toBe('false');
   expect(param.get('NaN')).toBeNull();
+  expect(param.get('false')).toBe('false');
   expect(param.get('zero')).toBe('0');
 });
 

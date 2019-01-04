@@ -19,7 +19,7 @@
  * v1/illust/new | {@link globalFeed} | yes
  * v1/illust/ranking | {@link rankingIllusts}, {@link rankingManga} | yes
  * v1/illust/recommended | {@link recommendedIllusts} | no
- * v1/illust/recommended-nologin
+ * ~~v1/illust/recommended-nologin~~
  * v1/illust/series
  * v1/live/list | {@link myLiveFeed}, {@link popularLiveFeeds} | yes
  * v1/mail-authentication/send
@@ -35,7 +35,7 @@
  * v1/novel/new | {@link globalNovelFeed} | yes
  * v1/novel/ranking | {@link rankingNovels} | yes
  * v1/novel/recommended | {@link recommendedNovels} | yes
- * v1/novel/recommended-nologin
+ * ~~v1/novel/recommended-nologin~~
  * v1/novel/series
  * v1/novel/text
  * v1/search/autocomplete | {@link autoComplete} | no

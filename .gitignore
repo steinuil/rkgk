@@ -3,6 +3,8 @@ _*
 .*
 !.gitignore
 !.prettierrc.json
+!.babelrc
 yarn-error.log
 docs
 build
+dist/*.js

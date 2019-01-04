@@ -5,9 +5,16 @@
   "description": "Pixiv browser",
   "repository": "https://github.com/steinuil/rkgk",
   "license": "MIT",
+  "dependencies": {
+    "react": "^16.7.0",
+    "react-dom": "^16.7.0"
+  },
   "devDependencies": {
     "@types/jest": "^23.3.11",
     "@types/node": "^10.12.18",
+    "@types/react": "^16.7.18",
+    "@types/react-dom": "^16.0.11",
+    "browserify": "^16.2.3",
     "fast-check": "^1.9.1",
     "jest": "^23.6.0",
     "ts-jest": "^23.10.5",
@@ -17,6 +24,8 @@
   },
   "scripts": {
     "test": "jest --watch",
-    "doc": "typedoc --out docs --theme minimal --listInvalidSymbolLinks"
+    "doc": "typedoc --out docs --theme minimal --listInvalidSymbolLinks",
+    "ts": "tsc",
+    "bundle": "browserify .\\build\\app\\App.js -o .\\dist\\script.js"
   }
 }
