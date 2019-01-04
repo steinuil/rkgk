@@ -6,8 +6,8 @@
   "repository": "https://github.com/steinuil/rkgk",
   "license": "MIT",
   "dependencies": {
-    "react": "^16.7.0",
-    "react-dom": "^16.7.0"
+    "react": "16.7.0-alpha.2",
+    "react-dom": "16.7.0-alpha.2"
   },
   "devDependencies": {
     "@types/jest": "^23.3.11",

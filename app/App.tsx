@@ -1,9 +1,5 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import * as Endpoints from '../src/api/Endpoints';
+import { Rkgk } from './Rkgk';
 
-Endpoints.autoComplete;
-
-const App = () => <div>rkgk</div>;
-
-ReactDOM.render(<App />, document.getElementById('root'));
+ReactDOM.render(<Rkgk />, document.getElementById('root'));
