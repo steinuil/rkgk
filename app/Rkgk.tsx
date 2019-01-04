@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Login } from './Login';
 import { NavBar } from './NavBar';
 
-export const Rkgk = () => {
+export function Rkgk() {
   const handleLogin = () => {};
 
   return (
@@ -11,4 +11,4 @@ export const Rkgk = () => {
       <Login onSubmit={handleLogin} />
     </div>
   );
-};
+}

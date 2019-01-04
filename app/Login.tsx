@@ -5,7 +5,7 @@ export interface Props {
   onSubmit: (username: string, password: string) => void;
 }
 
-export const Login = ({ onSubmit }: Props) => {
+export function Login({ onSubmit }: Props) {
   const [username, setUsername] = useTextInput('');
   const [password, setPassword] = useTextInput('');
 
@@ -31,4 +31,4 @@ export const Login = ({ onSubmit }: Props) => {
       <input type="submit" value="submit" onClick={handleSubmit} />
     </form>
   );
-};
+}

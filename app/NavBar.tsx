@@ -5,7 +5,7 @@ export interface Props {
   title: string;
 }
 
-export const NavBar = ({ title }: Props) => {
+export function NavBar({ title }: Props) {
   const [query, setQuery] = useTextInput('');
 
   return (
@@ -19,4 +19,4 @@ export const NavBar = ({ title }: Props) => {
       />
     </div>
   );
-};
+}
