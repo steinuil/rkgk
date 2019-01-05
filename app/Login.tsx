@@ -19,12 +19,14 @@ export function Login({ onSubmit }: Props) {
       <input
         type="text"
         placeholder="username"
+        required
         value={username}
         onChange={setUsername}
       />
       <input
         type="password"
         placeholder="password"
+        required
         value={password}
         onChange={setPassword}
       />

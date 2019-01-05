@@ -60,7 +60,7 @@
  * v1/user/follow/add | {@link follow} | -
  * v1/user/follow/delete | {@link unfollow} | -
  * v1/user/follow/detail | - | yes
- * v1/user/follower
+ * v1/user/follower | - | yes
  * v1/user/following
  * v1/user/illusts | {@link userIllusts} | yes
  * v1/user/list
