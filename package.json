@@ -25,9 +25,9 @@
   "scripts": {
     "prelint": "tsc --project tslint-rules",
     "lint": "tslint --project .",
-    "test": "jest --watch",
+    "test": "jest",
     "doc": "typedoc --out docs --theme minimal --listInvalidSymbolLinks",
-    "ts": "tsc",
+    "compile": "tsc",
     "bundle": "browserify .\\build\\app\\App.js -o .\\dist\\script.js"
   }
 }

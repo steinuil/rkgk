@@ -1,5 +1,5 @@
 import * as E from '../../src/api/Endpoints';
-import { MockClient } from './Mock';
+import { SampleClient } from './SampleClient';
 
 test.each([
   ['globalFeed', E.globalFeed],
@@ -25,7 +25,7 @@ test.each([
   ['userNovelBookmarks', E.userNovelBookmarks],
 ])('unpack %s', async (_, endpoint) => {
   expect.assertions(2);
-  const data = await endpoint(new MockClient());
+  const data = await endpoint(SampleClient);
   expect(data).toHaveProperty('curr');
   expect(data).toHaveProperty('nextPage');
 });
@@ -35,7 +35,7 @@ test.each([
   ['relatedUsers', E.relatedUsers],
 ])('unpack %s', async (_, endpoint) => {
   expect.assertions(1);
-  const data = await endpoint(new MockClient());
+  const data = await endpoint(SampleClient);
   expect(data.length).toBeGreaterThan(1);
 });
 
@@ -44,7 +44,7 @@ test.each([
   ['searchPopularNovels', E.searchPopularNovels],
 ])('unpack %s', async (_, endpoint) => {
   expect.assertions(2);
-  const data = await endpoint(new MockClient());
+  const data = await endpoint(SampleClient);
   expect(data.length).toBeGreaterThan(1);
   expect(data[0]).toHaveProperty('id');
 });
@@ -54,7 +54,7 @@ test.each([
   ['trendingNovelTags', E.trendingNovelTags],
 ])('unpack %s', async (_, endpoint) => {
   expect.assertions(2);
-  const data = await endpoint(new MockClient());
+  const data = await endpoint(SampleClient);
   expect(data.length).toBeGreaterThan(1);
   expect(data[0][1]).toHaveProperty('id');
 });

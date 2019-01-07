@@ -13,11 +13,11 @@ const readFile = (name: string): Promise<string> =>
   });
 
 /** Pixiv API client that reads data from the samples directory */
-export class MockClient implements Client {
-  request = async <T>(opts: Options): Promise<T> => {
+export const SampleClient: Client = {
+  request: async <T>(opts: Options): Promise<T> => {
     const fname =
       __dirname + '\\..\\sample\\' + opts.url.replace(/\//g, '_') + '.json';
     const f = JSON.parse(await readFile(fname));
     return f;
-  };
-}
+  },
+};
