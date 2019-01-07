@@ -1,10 +1,10 @@
 node_modules
+yarn-error.log
 _*
 .*
+*.js
 !.gitignore
 !.prettierrc.json
 !.babelrc
-yarn-error.log
 docs
 build
-dist/*.js

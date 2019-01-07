@@ -1,6 +1,6 @@
 {
   "tslint.enable": true,
-  "rulesDirectory": "build/src/rules",
+  "rulesDirectory": "tslint-rules",
   "extends": "tslint:latest",
   "rules": {
     "quotemark": [true, "single", "jsx-double", "avoid-escape"],

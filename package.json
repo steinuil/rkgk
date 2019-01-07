@@ -23,6 +23,8 @@
     "typescript": "^3.2.2"
   },
   "scripts": {
+    "prelint": "tsc --project tslint-rules",
+    "lint": "tslint --project .",
     "test": "jest --watch",
     "doc": "typedoc --out docs --theme minimal --listInvalidSymbolLinks",
     "ts": "tsc",
