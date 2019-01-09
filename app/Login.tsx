@@ -15,7 +15,7 @@ export function Login({ onSubmit }: Props) {
   };
 
   return (
-    <form>
+    <form onSubmit={handleSubmit}>
       <input
         type="text"
         placeholder="username"
@@ -30,7 +30,7 @@ export function Login({ onSubmit }: Props) {
         value={password}
         onChange={setPassword}
       />
-      <input type="submit" value="submit" onClick={handleSubmit} />
+      <input type="submit" value="submit" />
     </form>
   );
 }
