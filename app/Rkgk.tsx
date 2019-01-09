@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { NavBar } from './NavBar';
 import { ApiProvider } from './ApiContext';
+import { Browser } from './Browser';
 
 export function Rkgk() {
   return (
     <ApiProvider>
-      <NavBar title="rkgk" />
+      <Browser />
     </ApiProvider>
   );
 }
