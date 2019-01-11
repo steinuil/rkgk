@@ -18,3 +18,17 @@ A typed Pixiv browser.
 - [Sagitta](https://github.com/mika-f/Sagitta) - C#
 - [PixivAppAPI](https://github.com/kokororin/pixiv-api-php) - PHP, not very comprehensive but well documented params
 - [pixiv-cookie](https://github.com/kokororin/pixiv-cookie) - JS (cookie)
+
+## Development
+
+Useful scripts for development:
+
+```shell
+yarn        # install dependencies
+yarn bundle # compile and bundle
+yarn ts     # typecheck
+yarn test   # run tests
+yarn doc    # generate documentation
+yarn lint   # run linter
+yarn start  # compile and start proxy server at localhost:9292
+```

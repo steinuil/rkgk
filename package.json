@@ -29,7 +29,8 @@
     "lint": "tslint --project .",
     "test": "jest",
     "doc": "typedoc --out docs --theme minimal --listInvalidSymbolLinks",
-    "compile": "tsc",
+    "ts": "tsc --noEmit",
+    "prebundle": "tsc",
     "bundle": "browserify .\\build\\app\\App.js -o .\\dist\\script.js",
     "prestart": "go build ./proxy",
     "start": "./proxy.exe -root dist"
