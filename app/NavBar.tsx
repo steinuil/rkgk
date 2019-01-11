@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { useTextInput } from '../src/hooks/UseTextInput';
 import { ApiContext } from './ApiContext';
+import { Search } from './Search';
 
 export interface Props {
   title: string;
@@ -8,20 +8,12 @@ export interface Props {
 }
 
 export function NavBar({ title, handleQuery }: Props) {
-  const [query, setQuery] = useTextInput('');
-
   const { logOut } = React.useContext(ApiContext);
 
   return (
     <div>
       {title}
-      <input
-        type="text"
-        placeholder="Search"
-        value={query}
-        onChange={setQuery}
-      />
-      <button onClick={() => handleQuery(query)}>search</button>
+      <Search handleQuery={handleQuery} />
       <a onClick={logOut}>[log out]</a>
     </div>
   );
