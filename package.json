@@ -28,6 +28,8 @@
     "test": "jest",
     "doc": "typedoc --out docs --theme minimal --listInvalidSymbolLinks",
     "compile": "tsc",
-    "bundle": "browserify .\\build\\app\\App.js -o .\\dist\\script.js"
+    "bundle": "browserify .\\build\\app\\App.js -o .\\dist\\script.js",
+    "prestart": "go build ./proxy",
+    "start": "./proxy.exe -root dist"
   }
 }
