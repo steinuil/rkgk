@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func serveFile(url string, path string) {
+func serveLocalFile(url string, path string) {
 	http.HandleFunc(url, func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, path)
 	})
@@ -17,8 +17,11 @@ func main() {
 	root := flag.String("root", ".", "local path from which to serve the files")
 	flag.Parse()
 
-	serveFile("/", *root+"/index.html")
-	serveFile("/script.js", *root+"dist/script.js")
+	serveLocalFile("/", *root+"/index.html")
+	serveLocalFile("/script.js", *root+"/script.js")
+
+	proxyImage("/pixiv/img/")
+	proxyAPI("/pixiv/api/", "https://app-api.pixiv.net/")
 
 	log.Println("serving on port " + *port)
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
