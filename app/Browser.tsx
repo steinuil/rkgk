@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { NavBar } from './NavBar';
-import { useHistory } from './Hooks';
+import { useHistory } from '../src/hooks/UseHistory';
 
 interface Page<T> {
   page: T;

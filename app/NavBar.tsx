@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useTextInput } from './Hooks';
+import { useTextInput } from '../src/hooks/UseTextInput';
 import { ApiContext } from './ApiContext';
 
 export interface Props {

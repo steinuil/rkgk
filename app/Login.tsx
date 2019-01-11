@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useTextInput } from './Hooks';
+import { useTextInput } from '../src/hooks/UseTextInput';
 
 export interface Props {
   onSubmit: (username: string, password: string) => void;

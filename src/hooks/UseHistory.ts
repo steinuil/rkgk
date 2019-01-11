@@ -1,15 +1,4 @@
-import { useState, useEffect, ChangeEventHandler, Dispatch } from 'react';
-
-type UseTextInput = [string, ChangeEventHandler<HTMLInputElement>];
-
-export function useTextInput(initial: string): UseTextInput {
-  const [text, setText] = useState(initial);
-
-  const handleChange: ChangeEventHandler<HTMLInputElement> = ({ target }) =>
-    setText(target.value);
-
-  return [text, handleChange];
-}
+import { useState, useEffect, Dispatch } from 'react';
 
 type UseHistory<T> = [T, Dispatch<T>];
 
