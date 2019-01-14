@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { Login } from './Login';
 import { Client } from '../src/api/Client';
-import { ApiClient } from '../src/api/ApiClient';
+import { ApiClient, OnRefreshToken } from '../src/api/ApiClient';
 
 interface ApiContext {
   client: Client;
@@ -23,6 +23,13 @@ const initialState: ApiContext = {
 /* Helper functions */
 type SetClient = (c: ApiContext | null) => void;
 
+const saveToLocalStorage: OnRefreshToken = (tokenInfo) => {
+  localStorage.setItem('rkgk_refreshToken', tokenInfo.refreshToken);
+  localStorage.setItem('rkgk_accessToken', tokenInfo.accessToken);
+};
+
+const domains = { api: '/pixiv/api/', auth: '/pixiv/auth/token' };
+
 function initializeFromLocalStorage(setClient: SetClient) {
   const refreshToken = localStorage.getItem('rkgk_refreshToken');
   if (!refreshToken) {
@@ -31,7 +38,8 @@ function initializeFromLocalStorage(setClient: SetClient) {
 
   const client = new ApiClient(
     { state: 'token', refreshToken },
-    { api: '', auth: '' }
+    domains,
+    saveToLocalStorage
   );
 
   setClient({
@@ -46,7 +54,8 @@ const setCredentials = (setClient: SetClient) => (
 ) => {
   const client = new ApiClient(
     { state: 'password', username, password },
-    { api: '', auth: '' }
+    domains,
+    saveToLocalStorage
   );
 
   setClient({

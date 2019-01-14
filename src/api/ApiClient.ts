@@ -27,6 +27,10 @@ export interface Logged {
   expires: Date;
 }
 
+export type OnRefreshToken = (
+  state: Pick<Logged, 'refreshToken' | 'accessToken' | 'expires'>
+) => void;
+
 export class InvalidCredentials extends Error {
   constructor() {
     super();
@@ -35,7 +39,11 @@ export class InvalidCredentials extends Error {
 }
 
 export class ApiClient implements Client {
-  constructor(private creds: Credentials, private domains: Domains) {}
+  constructor(
+    private creds: Credentials,
+    private domains: Domains,
+    private onRefreshToken?: OnRefreshToken
+  ) {}
 
   forceRefresh = async () => {
     await this.refresh(true);
@@ -116,6 +124,10 @@ export class ApiClient implements Client {
         refreshToken: resp.response.refresh_token,
         expires,
       };
+
+      if (this.onRefreshToken) {
+        this.onRefreshToken(this.creds);
+      }
 
       return resp.response.access_token;
     } catch (e) {
