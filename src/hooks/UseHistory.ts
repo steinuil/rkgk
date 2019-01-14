@@ -11,7 +11,6 @@ export function useHistory<T>(initialState: T): UseHistory<T> {
   };
 
   const restoreState = (ev: PopStateEvent) => {
-    console.log(ev);
     if (ev.state) {
       setState(ev.state);
     }
@@ -19,7 +18,7 @@ export function useHistory<T>(initialState: T): UseHistory<T> {
 
   useEffect(() => {
     // Push the initial state
-    history.pushState(state, '');
+    history.replaceState(state, '');
 
     // Subscribe to history state changes
     window.addEventListener('popstate', restoreState);

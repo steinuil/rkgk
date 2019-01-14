@@ -19,6 +19,7 @@ export function Login({ onSubmit }: Props) {
       <input
         type="text"
         placeholder="username"
+        autoComplete="username"
         required
         value={username}
         onChange={setUsername}
@@ -26,6 +27,7 @@ export function Login({ onSubmit }: Props) {
       <input
         type="password"
         placeholder="password"
+        autoComplete="current-password"
         required
         value={password}
         onChange={setPassword}

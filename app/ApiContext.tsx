@@ -44,7 +44,10 @@ function initializeFromLocalStorage(setClient: SetClient) {
 
   setClient({
     client,
-    logOut: () => setClient(null),
+    logOut: () => {
+      setClient(null);
+      localStorage.removeItem('rkgk_refreshToken');
+    },
   });
 }
 
@@ -60,7 +63,10 @@ const setCredentials = (setClient: SetClient) => (
 
   setClient({
     client,
-    logOut: () => setClient(null),
+    logOut: () => {
+      setClient(null);
+      localStorage.removeItem('rkgk_refreshToken');
+    },
   });
 };
 
