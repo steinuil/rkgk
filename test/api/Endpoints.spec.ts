@@ -31,7 +31,8 @@ test.each([
 });
 
 test.each([
-  // ['autoComplete', E.autoComplete],
+  // prettier-ignore
+  ['autoComplete', E.autoComplete],
   ['relatedUsers', E.relatedUsers],
 ])('unpack %s', async (_, endpoint) => {
   expect.assertions(1);

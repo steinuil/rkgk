@@ -38,7 +38,7 @@
  * ~~v1/novel/recommended-nologin~~
  * v1/novel/series
  * v1/novel/text
- * v1/search/autocomplete | {@link autoComplete} | no
+ * v1/search/autocomplete | {@link autoComplete} | yes
  * v1/search/bookmark-ranges/illust
  * v1/search/bookmark-ranges/novel
  * v1/search/illust | {@link searchIllusts} | yes
