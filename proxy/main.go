@@ -19,9 +19,11 @@ func main() {
 
 	serveLocalFile("/", *root+"/index.html")
 	serveLocalFile("/script.js", *root+"/script.js")
+	serveLocalFile("/logo.png", *root+"/logo.png")
 
 	proxyImage("/pixiv/img/")
 	proxyAPI("/pixiv/api/", "app-api.pixiv.net", "/")
+	proxyAPI("/pixiv/auth/", "oauth.secure.pixiv.net", "/auth/")
 
 	log.Println("serving on port " + *port)
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
