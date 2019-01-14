@@ -1,5 +1,6 @@
 node_modules
 yarn-error.log
+
 _*
 .*
 *.js
@@ -7,5 +8,7 @@ _*
 !.gitignore
 !.prettierrc.json
 !.babelrc
+!webpack.config.js
+
 docs
 build

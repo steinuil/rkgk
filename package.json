@@ -16,23 +16,24 @@
     "@types/node": "^10.12.18",
     "@types/react": "^16.7.18",
     "@types/react-dom": "^16.0.11",
-    "browserify": "^16.2.3",
     "fast-check": "^1.9.1",
     "jest": "^23.6.0",
     "ts-jest": "^23.10.5",
+    "ts-loader": "^5.3.3",
     "tslint": "^5.9.1",
     "typedoc": "^0.13.0",
-    "typescript": "^3.2.2"
+    "typescript": "^3.2.2",
+    "webpack": "^4.28.4",
+    "webpack-cli": "^3.2.1"
   },
   "scripts": {
+    "bundle": "webpack --display minimal",
+    "doc": "typedoc --out docs --theme minimal --listInvalidSymbolLinks",
     "prelint": "tsc --project tslint-rules",
     "lint": "tslint --project .",
-    "test": "jest",
-    "doc": "typedoc --out docs --theme minimal --listInvalidSymbolLinks",
-    "ts": "tsc --noEmit",
-    "prebundle": "tsc",
-    "bundle": "browserify .\\build\\app\\App.js -o .\\dist\\script.js",
     "prestart": "go build ./proxy",
-    "start": "./proxy.exe -root dist"
+    "start": "./proxy.exe -root dist",
+    "test": "jest",
+    "ts": "tsc --noEmit"
   }
 }
