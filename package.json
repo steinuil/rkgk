@@ -31,7 +31,7 @@
     "doc": "typedoc --out docs --theme minimal --listInvalidSymbolLinks",
     "prelint": "tsc --project tslint-rules",
     "lint": "tslint --project .",
-    "prestart": "go build ./proxy",
+    "prestart": "go build -o proxy.exe ./proxy",
     "start": "./proxy.exe -root dist",
     "test": "jest",
     "ts": "tsc --noEmit"

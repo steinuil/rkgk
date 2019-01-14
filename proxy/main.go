@@ -21,7 +21,7 @@ func main() {
 	serveLocalFile("/script.js", *root+"/script.js")
 
 	proxyImage("/pixiv/img/")
-	proxyAPI("/pixiv/api/", "https://app-api.pixiv.net/")
+	proxyAPI("/pixiv/api/", "app-api.pixiv.net", "/")
 
 	log.Println("serving on port " + *port)
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
