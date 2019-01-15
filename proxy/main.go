@@ -20,6 +20,7 @@ func main() {
 	serveLocalFile("/", *root+"/index.html")
 	serveLocalFile("/script.js", *root+"/script.js")
 	serveLocalFile("/logo.png", *root+"/logo.png")
+	serveLocalFile("/style.css", *root+"/style.css")
 
 	proxyImage("/pixiv/img/")
 	proxyAPI("/pixiv/api/", "app-api.pixiv.net", "/")
