@@ -1,0 +1,72 @@
+:root {
+    --smoky-black: #3F51B5; }
+
+* {
+    padding: 0;
+    margin: 0;
+    border: 0;
+}
+
+body {
+    font-size: 16px;
+    font-family: 'Iosevka Type', 'Segoe UI', sans-serif;
+}
+
+.completion {
+    margin: 0.1em;
+}
+
+.nav-bar {
+    position: sticky;
+    top: .5em;
+    right: 0;
+    display: flex;
+    padding: .5em .8em;
+    margin: .5em;
+    box-shadow: 4px 4px 0 0 #9FA8DA;
+    background-color: var(--smoky-black);
+    color: #FFF;
+}
+
+.nav-bar > *:not(:first-child) {
+    margin-left: .2em;
+}
+
+.title {
+    font-weight: 700;
+    margin-right: auto;
+}
+
+input, button {
+    font-size: inherit;
+    font-family: inherit;
+    background-color: inherit;
+    color: inherit;
+}
+
+.search-bar:before {
+    content: "[";
+}
+
+.search-bar:after {
+    content: "]";
+}
+
+.search-bar input {
+    width: 8em;
+    margin-right: .2em;
+    outline-width: 0;
+}
+
+.search-bar input::placeholder {
+    color: #ffffff80;
+}
+
+.button {
+    cursor: pointer;
+    outline-width: 0;
+}
+
+.button:hover {
+    text-decoration: underline;
+}
