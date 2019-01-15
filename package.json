@@ -6,8 +6,8 @@
   "repository": "https://github.com/steinuil/rkgk",
   "license": "MIT",
   "dependencies": {
-    "react": "16.7.0-alpha.2",
-    "react-dom": "16.7.0-alpha.2",
+    "react": "^16.8.0-alpha",
+    "react-dom": "^16.8.0-alpha",
     "redux": "^4.0.1",
     "redux-react-hook": "^3.0.1"
   },
