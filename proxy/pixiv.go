@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"strings"
@@ -14,6 +15,7 @@ func proxyImage(proxyPath string) {
 		req.URL.Path = "/" + strings.TrimPrefix(req.URL.Path, proxyPath)
 		req.Header.Set("Referer", "https://pixiv.net")
 		req.Header.Del("Upgrade-Insecure-Requests")
+		log.Println(req.URL.String())
 	}}
 
 	http.HandleFunc(proxyPath, func(w http.ResponseWriter, r *http.Request) {
@@ -43,6 +45,7 @@ func proxyAPI(proxyPath string, actualHost string, pathPrefix string) {
 		req.Header.Set("App-Version", "5.0.56")
 		req.Header.Set("User-Agent", "PixivAndroidApp/5.0.56 (Android 6.0.1; SM-G850F)")
 		req.Header.Del("Upgrade-Insecure-Requests")
+		log.Println(req.URL.String())
 	}}
 
 	http.HandleFunc(proxyPath, func(w http.ResponseWriter, r *http.Request) {
