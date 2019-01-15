@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTextInput } from '../src/hooks/UseTextInput';
+import { Button } from './Button';
 
 export interface Props {
   handleQuery: (query: string) => void;
@@ -8,15 +9,22 @@ export interface Props {
 export function Search({ handleQuery }: Props) {
   const [query, setQuery] = useTextInput('');
 
+  function handleSubmit(ev: React.SyntheticEvent) {
+    ev.preventDefault();
+    if (query.length > 0) {
+      handleQuery(query);
+    }
+  }
+
   return (
-    <div>
+    <form className="search-bar" onSubmit={handleSubmit}>
       <input
         type="text"
-        placeholder="Search"
+        placeholder="query..."
         value={query}
         onChange={setQuery}
       />
-      <button onClick={() => handleQuery(query)}>search</button>
-    </div>
+      <Button noBrackets>search</Button>
+    </form>
   );
 }

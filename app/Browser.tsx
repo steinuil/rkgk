@@ -5,6 +5,7 @@ import * as Endpoint from '../src/api/Endpoints';
 import { ApiContext } from './ApiContext';
 import { Illust } from '../src/api/Items';
 import { Thumbnail } from './IllustList';
+import { Button } from './Button';
 
 interface Page<T> {
   page: T;
@@ -37,18 +38,18 @@ export function Browser({}) {
         <div>
           Completions:
           {completions.map((c) => (
-            <span className="completion" onClick={search(c)}>
+            <Button key={c} className="completion" onClick={search(c)}>
               {c}
-            </span>
+            </Button>
           ))}
         </div>
       )}
       {page.page === 'RESULTS' && (
-        <div>
+        <main className="results">
           {page.results.map((illust) => (
             <Thumbnail key={illust.id} {...illust} />
           ))}
-        </div>
+        </main>
       )}
     </>
   );
