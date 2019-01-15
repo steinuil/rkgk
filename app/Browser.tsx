@@ -4,57 +4,52 @@ import { useHistory } from '../src/hooks/UseHistory';
 import * as Endpoint from '../src/api/Endpoints';
 import { ApiContext } from './ApiContext';
 import { Illust } from '../src/api/Items';
+import { Thumbnail } from './IllustList';
 
 interface Page<T> {
   page: T;
 }
 
-type PageState =
-  | Page<'HOME'>
-  | Page<'SEARCH'> & { query: string }
-  | Page<'RESULTS'> & { results: string[] }
-  | Page<'GOTO'> & { query: string }
-  | Page<'SEARCHRESULTS'> & { results: Illust[] };
+type PageState = Page<'HOME'> | Page<'RESULTS'> & { results: Illust[] };
 
 const initialPage: PageState = { page: 'HOME' };
 
 export function Browser({}) {
   const [page, setPage] = useHistory<PageState>(initialPage);
+  const [completions, setCompletions] = React.useState<string[]>([]);
   const { client } = React.useContext(ApiContext);
 
-  const search = (query: string) => () => setPage({ page: 'GOTO', query });
+  const complete = (query: string) =>
+    Endpoint.autoComplete(client, query).then((results) =>
+      setCompletions(results)
+    );
 
-  React.useEffect(
-    () => {
-      if (page.page === 'SEARCH') {
-        Endpoint.autoComplete(client, page.query).then((results) =>
-          setPage({ page: 'RESULTS', results })
-        );
-      } else if (page.page === 'GOTO') {
-        Endpoint.searchIllusts(client, page.query).then((results) =>
-          setPage({ page: 'SEARCHRESULTS', results: results.curr })
-        );
-      }
-    },
-    [page]
-  );
+  const search = (query: string) => () =>
+    Endpoint.searchIllusts(client, query).then((results) =>
+      setPage({ page: 'RESULTS', results: results.curr })
+    );
 
   return (
     <>
-      <NavBar
-        title="rkgk"
-        handleQuery={(query) => setPage({ page: 'SEARCH', query })}
-      />
-      Page: {page.page}
-      {page.page === 'RESULTS'
-        ? page.results.map((r) => (
-            <div key={r} onClick={search(r)}>
-              {r}
-            </div>
-          ))
-        : page.page === 'SEARCHRESULTS'
-        ? page.results.map((r) => <div key={r.id}>{JSON.stringify(r)}</div>)
-        : null}
+      <NavBar title="rkgk" handleQuery={complete} />
+      <div>Page: {page.page}</div>
+      {completions.length > 0 && (
+        <div>
+          Completions:
+          {completions.map((c) => (
+            <span className="completion" onClick={search(c)}>
+              {c}
+            </span>
+          ))}
+        </div>
+      )}
+      {page.page === 'RESULTS' && (
+        <div>
+          {page.results.map((illust) => (
+            <Thumbnail key={illust.id} {...illust} />
+          ))}
+        </div>
+      )}
     </>
   );
 }
