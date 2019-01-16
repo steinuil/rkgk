@@ -1,158 +1,159 @@
 :root {
-    --smoky-black: #3F51B5; }
+  --smoky-black: #3f51b5;
+}
 
 * {
-    padding: 0;
-    margin: 0;
-    border: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
 }
 
 body {
-    font-size: 16px;
-    font-family: 'Iosevka Type', 'Segoe UI', sans-serif;
+  font-size: 16px;
+  font-family: 'Iosevka Type', 'Segoe UI', sans-serif;
 }
 
 .completion {
-    margin: 0.1em;
+  margin: 0.1em;
 }
 
 .nav-bar {
-    position: sticky;
-    top: .5em;
-    right: 0;
-    display: flex;
-    padding: .5em .8em;
-    margin: 8px;
-    box-shadow: 4px 4px 0 0 #9FA8DA;
-    background-color: var(--smoky-black);
-    color: #FFF;
-    z-index: 10;
+  position: sticky;
+  top: 0.5em;
+  right: 0;
+  display: flex;
+  padding: 0.5em 0.8em;
+  margin: 8px;
+  box-shadow: 4px 4px 0 0 #9fa8da;
+  background-color: var(--smoky-black);
+  color: #fff;
+  z-index: 10;
 }
 
 .nav-bar > *:not(:first-child) {
-    margin-left: .2em;
+  margin-left: 0.2em;
 }
 
 .title {
-    font-weight: 700;
-    margin-right: auto;
+  font-weight: 700;
+  margin-right: auto;
 }
 
-input, button {
-    font-size: inherit;
-    font-family: inherit;
-    background-color: transparent;
-    color: inherit;
+input,
+button {
+  font-size: inherit;
+  font-family: inherit;
+  background-color: transparent;
+  color: inherit;
 }
 
 .search-bar:before {
-    content: "[";
+  content: '[';
 }
 
 .search-bar:after {
-    content: "]";
+  content: ']';
 }
 
 .search-bar input {
-    width: 8em;
-    margin-right: .2em;
-    outline-width: 0;
+  width: 8em;
+  margin-right: 0.2em;
+  outline-width: 0;
 }
 
 .search-bar input::placeholder {
-    color: #ffffff80;
+  color: #ffffff80;
 }
 
 .button {
-    cursor: pointer;
-    outline-width: 0;
+  cursor: pointer;
+  outline-width: 0;
 }
 
 .button:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 .results {
-    margin: 4px;
-    display: flex;
-    flex-wrap: wrap;
-
+  margin: 4px;
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .thumbnail {
-    width: 150px;
-    height: 150px;
-    display: block;
-    position: relative;
-    background-color: grey;
-    margin: 4px;
-    font-size: .9em;
-    overflow: hidden;
+  width: 150px;
+  height: 150px;
+  display: block;
+  position: relative;
+  background-color: grey;
+  margin: 4px;
+  font-size: 0.9em;
+  overflow: hidden;
 }
 
 .thumbnail .picture {
-    width: 150px;
-    height: 150px;
-    filter: blur(10px) grayscale();
-    opacity: 0;
+  width: 150px;
+  height: 150px;
+  filter: blur(10px) grayscale();
+  opacity: 0;
 }
 
 .thumbnail .user {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    margin: 6px;
-    transition: opacity .2s;
-    display: flex;
-    align-items: center;
-    opacity: 0;
-    white-space: nowrap;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  margin: 6px;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  white-space: nowrap;
 }
 
 .thumbnail:hover .user {
-    opacity: 1;
+  opacity: 1;
 }
 
 .thumbnail .user .name {
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-    flex-shrink: 1;
-    min-width: 0;
-    margin-left: 5px;
-    padding: 0 .2em;
-    background-color: #ddd;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  flex-shrink: 1;
+  min-width: 0;
+  margin-left: 5px;
+  padding: 0 0.2em;
+  background-color: #ddd;
 }
 
 .thumbnail .user .avatar {
-    width: 1.5em;
-    height: 1.5em;
+  width: 1.5em;
+  height: 1.5em;
 }
 
 .thumbnail .pages {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    background-color: #DDD;
-    margin: 6px;
-    padding: .1em .2em;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background-color: #ddd;
+  margin: 6px;
+  padding: 0.1em 0.2em;
 }
 
 .thumbnail .heart {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    margin: 8px;
-    transition: opacity .2s;
-    opacity: 0;
-    width: 1.5em;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  margin: 8px;
+  transition: opacity 0.2s;
+  /*   opacity: 0; */
+  width: 1.5em;
 }
 
 .thumbnail .heart path {
-    fill: #DDD;
+  fill: #ddd;
 }
 
 .thumbnail:hover .heart {
-    opacity: 1;
+  opacity: 1;
 }

@@ -1,13 +1,13 @@
 import * as React from 'react';
-import { useMappedState } from 'redux-react-hook';
-import { Work } from '../src/api/Items';
+// import { useMappedState } from 'redux-react-hook';
+import { Illust } from '../src/api/Items';
 import { Heart } from './Heart';
-import { Store } from './WorkCache';
+// import { Store } from './WorkCache';
 
 const proxyImage = (src: string) =>
   src.replace('https://i.pximg.net/', '/pixiv/img/');
 
-export const Thumbnail = ({ pages, user, thumbnail }: Work) => (
+export const Thumbnail = ({ pages, user, thumbnail }: Illust) => (
   <a className="thumbnail">
     <img className="picture" src={proxyImage(thumbnail)} />
     <div className="user">
@@ -19,22 +19,22 @@ export const Thumbnail = ({ pages, user, thumbnail }: Work) => (
   </a>
 );
 
-export interface Props {
-  works: number[];
-}
+// export interface Props {
+//   works: number[];
+// }
 
-export function WorkList({ works }: Props) {
-  const mapState = React.useCallback(
-    (state: Store) => works.map((id) => state.works[id]),
-    [works]
-  );
-  const items = useMappedState(mapState);
+// export function WorkList({ works }: Props) {
+//   const mapState = React.useCallback(
+//     (state: Store) => works.map((id) => state.works[id]),
+//     [works]
+//   );
+//   const items = useMappedState(mapState);
 
-  return (
-    <div>
-      {items.map((item) => (
-        <Thumbnail {...item} />
-      ))}
-    </div>
-  );
-}
+//   return (
+//     <div>
+//       {items.map((item) => (
+//         <Thumbnail {...item} />
+//       ))}
+//     </div>
+//   );
+// }
