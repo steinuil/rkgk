@@ -1,17 +1,21 @@
 import * as React from 'react';
 import { useMappedState } from 'redux-react-hook';
 import { Work } from '../src/api/Items';
-// import { Heart } from './Heart';
+import { Heart } from './Heart';
 import { Store } from './WorkCache';
 
-// const proxyImage = (src: string) =>
-//   src.replace('https://i.pximg.net/', '/pixiv/img/');
+const proxyImage = (src: string) =>
+  src.replace('https://i.pximg.net/', '/pixiv/img/');
 
-export const Thumbnail = ({ pages }: Work) => (
+export const Thumbnail = ({ pages, user, thumbnail }: Work) => (
   <a className="thumbnail">
-    {/* <img src={proxyImage(thumbnail)} width="200" height="200" /> */}
-    {pages && <div className="pages">{pages}</div>}
-    {/* <Heart color="#acc12f" strokeColor="white" /> */}
+    <img className="picture" src={proxyImage(thumbnail)} />
+    <div className="user">
+      <img className="avatar" src={proxyImage(user.avatar)} />
+      <div className="name">{user.displayName}</div>
+    </div>
+    {pages > 1 && <div className="pages">{pages}</div>}
+    <Heart />
   </a>
 );
 

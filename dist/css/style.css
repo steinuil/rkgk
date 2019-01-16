@@ -22,10 +22,11 @@ body {
     right: 0;
     display: flex;
     padding: .5em .8em;
-    margin: .5em;
+    margin: 8px;
     box-shadow: 4px 4px 0 0 #9FA8DA;
     background-color: var(--smoky-black);
     color: #FFF;
+    z-index: 10;
 }
 
 .nav-bar > *:not(:first-child) {
@@ -40,7 +41,7 @@ body {
 input, button {
     font-size: inherit;
     font-family: inherit;
-    background-color: inherit;
+    background-color: transparent;
     color: inherit;
 }
 
@@ -69,4 +70,89 @@ input, button {
 
 .button:hover {
     text-decoration: underline;
+}
+
+.results {
+    margin: 4px;
+    display: flex;
+    flex-wrap: wrap;
+
+}
+
+.thumbnail {
+    width: 150px;
+    height: 150px;
+    display: block;
+    position: relative;
+    background-color: grey;
+    margin: 4px;
+    font-size: .9em;
+    overflow: hidden;
+}
+
+.thumbnail .picture {
+    width: 150px;
+    height: 150px;
+    filter: blur(10px) grayscale();
+    opacity: 0;
+}
+
+.thumbnail .user {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 6px;
+    transition: opacity .2s;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    white-space: nowrap;
+}
+
+.thumbnail:hover .user {
+    opacity: 1;
+}
+
+.thumbnail .user .name {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    flex-shrink: 1;
+    min-width: 0;
+    margin-left: 5px;
+    padding: 0 .2em;
+    background-color: #ddd;
+}
+
+.thumbnail .user .avatar {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.thumbnail .pages {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    background-color: #DDD;
+    margin: 6px;
+    padding: .1em .2em;
+}
+
+.thumbnail .heart {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    margin: 8px;
+    transition: opacity .2s;
+    opacity: 0;
+    width: 1.5em;
+}
+
+.thumbnail .heart path {
+    fill: #DDD;
+}
+
+.thumbnail:hover .heart {
+    opacity: 1;
 }
