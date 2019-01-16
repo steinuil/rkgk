@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"os"
+	"path"
 	"strings"
 )
 
@@ -33,7 +35,7 @@ func proxyImage(proxyPath string) {
 	})
 }
 
-func proxyAPI(proxyPath string, actualHost string, pathPrefix string) {
+func proxyAPI(proxyPath string, actualHost string, pathPrefix string, dumpDir *string) {
 	proxy := httputil.ReverseProxy{Director: func(req *http.Request) {
 		req.Host = actualHost
 		req.URL.Scheme = "https"
@@ -46,6 +48,24 @@ func proxyAPI(proxyPath string, actualHost string, pathPrefix string) {
 		req.Header.Set("User-Agent", "PixivAndroidApp/5.0.56 (Android 6.0.1; SM-G850F)")
 		req.Header.Del("Upgrade-Insecure-Requests")
 		log.Println(req.URL.String())
+	}, ModifyResponse: func(res *http.Response) error {
+		if dumpDir == nil {
+			return nil
+		}
+
+		fname := path.Join(
+			*dumpDir,
+			strings.Replace(strings.TrimLeft(res.Request.URL.Path, "/"), "/", "_", -1)+".json.gz",
+		)
+
+		out, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0655)
+		if err != nil {
+			return nil
+		}
+
+		res.Body = makeTeeReadCloser(res.Body, out)
+
+		return nil
 	}}
 
 	http.HandleFunc(proxyPath, func(w http.ResponseWriter, r *http.Request) {
